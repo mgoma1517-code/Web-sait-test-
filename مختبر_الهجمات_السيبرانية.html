@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مختبر الهجمات السيبرانية — Cyber Attack Lab</title>
+<style>
+  :root{--bg:#0a0f1a;--panel:#111a2e;--panel2:#16233d;--ink:#eaf1fb;--mut:#8ea3c4;
+    --teal:#29d0b8;--blue:#4a9eff;--amber:#ffb02e;--red:#ff5566;--green:#33d17a;--purple:#9b6dff;
+    --line:#243450;--good:#33d17a;--bad:#ff5566}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);
+    font-family:"Tahoma","Segoe UI",Arial,sans-serif}
+  body{background-image:radial-gradient(circle at 1px 1px,rgba(74,158,255,.07) 1px,transparent 0);background-size:26px 26px}
+  .mono{font-family:"Consolas","Courier New",monospace;letter-spacing:.3px}
+  .wrap{max-width:1000px;margin:0 auto;padding:20px 16px 60px}
+  .screen{display:none}.screen.on{display:block;animation:fade .35s both}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .btn{cursor:pointer;border:none;font-family:inherit;font-weight:bold;font-size:15px;border-radius:11px;padding:11px 20px;transition:.14s;
+    color:#06121f;background:linear-gradient(180deg,var(--teal),#17a892);box-shadow:0 8px 22px rgba(41,208,184,.28)}
+  .btn:hover{transform:translateY(-2px)}.btn:active{transform:translateY(0)}
+  .btn.blue{background:linear-gradient(180deg,var(--blue),#2e7fe0);box-shadow:0 8px 22px rgba(74,158,255,.28);color:#04101f}
+  .btn.red{background:linear-gradient(180deg,var(--red),#e23b4d);color:#fff;box-shadow:0 8px 22px rgba(255,85,102,.28)}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--mut);box-shadow:none;font-size:13.5px;padding:9px 16px}
+  .btn.sm{padding:9px 15px;font-size:13.5px}
+
+  /* HUB */
+  .hero{text-align:center;padding:14px 0 8px}
+  .kicker{color:var(--teal);letter-spacing:3px;font-weight:bold;font-size:13px}
+  h1{font-size:clamp(26px,5vw,40px);margin:.15em 0}
+  .lead{color:var(--mut);max-width:640px;margin:8px auto 0;line-height:1.9}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-top:22px}
+  .labcard{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:16px;padding:16px;cursor:pointer;
+    transition:.16s;position:relative;overflow:hidden}
+  .labcard:hover{transform:translateY(-3px);border-color:var(--teal);box-shadow:0 14px 40px rgba(0,0,0,.4)}
+  .labcard .ic{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:10px}
+  .labcard h3{margin:2px 0 4px;font-size:17px}
+  .labcard p{margin:0;color:var(--mut);font-size:13px;line-height:1.7}
+  .labcard .no{position:absolute;top:12px;left:14px;font-family:monospace;color:var(--mut);font-size:13px}
+  .labcard .chk{position:absolute;top:12px;left:14px;color:var(--green);font-size:15px;display:none}
+  .labcard.done .chk{display:block}.labcard.done .no{display:none}
+  .labcard .go{margin-top:12px;font-size:13px;color:var(--teal);font-weight:bold}
+
+  /* LAB shell */
+  .labtop{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+  .labtitle{display:flex;align-items:center;gap:12px}
+  .labtitle .ic{width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+  .labtitle h2{margin:0;font-size:20px}.labtitle .s{color:var(--mut);font-size:13px;margin-top:2px}
+  .stage{background:linear-gradient(180deg,#0c1424,#0a1120);border:1px solid var(--line);border-radius:16px;padding:16px;position:relative;overflow:hidden}
+  .stagegrid{background-image:linear-gradient(rgba(74,158,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(74,158,255,.05) 1px,transparent 1px);background-size:22px 22px}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+  .seg{display:flex;background:#0c1424;border:1px solid var(--line);border-radius:11px;overflow:hidden}
+  .seg button{cursor:pointer;border:none;background:transparent;color:var(--mut);font-family:inherit;font-weight:bold;padding:10px 16px;font-size:14px}
+  .seg button.on{background:var(--blue);color:#04101f}
+  .readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:12px}
+  .ro{background:#0c1424;border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+  .ro .l{color:var(--mut);font-size:11px}.ro .v{font-weight:bold;font-size:14px;margin-top:2px}
+
+  .explain{margin-top:14px;border-radius:14px;border:1px solid var(--line);background:var(--panel);padding:0;overflow:hidden;display:none}
+  .explain.on{display:block;animation:fade .3s both}
+  .exhead{padding:12px 16px;font-weight:bold;display:flex;align-items:center;gap:8px}
+  .exhead.good{background:rgba(51,209,122,.12);color:var(--green)}
+  .exhead.bad{background:rgba(255,85,102,.12);color:var(--red)}
+  .exhead.info{background:rgba(74,158,255,.12);color:var(--blue)}
+  .exbody{padding:14px 16px;line-height:1.95;font-size:14px}
+  .exbody b{color:var(--teal)}
+  .exbody .row{display:flex;gap:10px;margin:8px 0;align-items:flex-start}
+  .exbody .dot{width:9px;height:9px;border-radius:50%;background:var(--teal);margin-top:7px;flex:0 0 auto}
+  .exbody .dot.r{background:var(--red)}.exbody .dot.g{background:var(--green)}
+
+  /* nodes / diagram */
+  .diagram{position:relative;width:100%;height:300px}
+  @media(max-width:560px){.diagram{height:340px}}
+  .diagram>svg{position:absolute;inset:0;width:100%;height:100%}
+  .node{position:absolute;transform:translate(-50%,-50%);text-align:center;z-index:2}
+  .node .lbl{font-size:11.5px;color:var(--mut);margin-top:4px;white-space:nowrap;font-weight:bold}
+  .node .box{filter:drop-shadow(0 4px 10px rgba(0,0,0,.4))}
+  .pk{position:absolute;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);z-index:3;box-shadow:0 0 8px currentColor}
+  .meter{height:12px;border-radius:7px;background:#20304e;overflow:hidden}
+  .meter>i{display:block;height:100%;width:0%;border-radius:7px;background:linear-gradient(90deg,var(--green),var(--amber));transition:width .2s,background .3s}
+
+  /* email client (phishing) */
+  .mailapp{max-width:560px;margin:0 auto}
+  .mailhdr{display:flex;justify-content:space-between;color:var(--mut);font-size:12px;padding:0 4px 8px}
+  .mail{background:#0e1728;border:1px solid var(--line);border-radius:12px;padding:14px;animation:slidein .5s both}
+  @keyframes slidein{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:none}}
+  .mail .from{display:flex;align-items:center;gap:8px;font-size:13px}
+  .mail .from .av{width:30px;height:30px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:bold}
+  .mail .subj{font-weight:bold;margin:10px 0 6px;font-size:15px}
+  .mail .body{color:#d6e2f5;font-size:13.5px;line-height:1.9}
+  .fakebtn{display:inline-block;margin-top:10px;background:var(--blue);color:#04101f;font-weight:bold;padding:8px 16px;border-radius:8px;text-decoration:none}
+  .hl{background:rgba(255,176,46,.18);border-bottom:2px dotted var(--amber);cursor:help;border-radius:3px;padding:0 2px}
+  .fakepage{max-width:420px;margin:10px auto 0;background:#0e1728;border:1px solid var(--line);border-radius:12px;padding:16px;text-align:center;animation:fade .3s both}
+  .inp{width:100%;background:#0a1120;border:1px solid var(--line);border-radius:8px;padding:9px;color:var(--ink);margin:6px 0;text-align:right;font-family:inherit}
+
+  /* trojan */
+  .scene3{position:relative;height:280px;display:flex;align-items:flex-end;justify-content:center}
+  .ground{position:absolute;bottom:40px;left:0;right:0;height:2px;background:var(--line)}
+  .pc-target{position:absolute;bottom:42px;left:8%;text-align:center}
+  .door{transition:.5s}
+  .soldier{position:absolute;bottom:44px;width:16px;height:22px;border-radius:4px 4px 2px 2px;background:var(--red);opacity:0;box-shadow:0 0 8px var(--red)}
+
+  /* files (ransomware) */
+  .files{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:460px;margin:6px auto}
+  @media(max-width:520px){.files{grid-template-columns:repeat(4,1fr)}}
+  .file{position:relative;background:#0e1728;border:1px solid var(--line);border-radius:9px;height:56px;display:flex;align-items:center;justify-content:center;transition:.3s}
+  .file.enc{background:rgba(255,85,102,.14);border-color:var(--red)}
+  .file .lockov{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.5);transition:.3s}
+  .file.enc .lockov{opacity:1;transform:scale(1)}
+  .ransom{max-width:420px;margin:12px auto 0;background:#180d14;border:1px solid var(--red);border-radius:12px;padding:16px;text-align:center;animation:fade .3s both}
+
+  /* clickable option cards */
+  .opt{display:flex;align-items:center;gap:8px;background:#0e1728;border:1px solid var(--line);border-radius:11px;padding:11px 13px;font-size:13.5px;cursor:pointer;transition:.15s;color:#d6e2f5}
+  .opt:hover{border-color:var(--teal);transform:translateY(-1px)}
+  .opt.correct{border-color:var(--green);background:rgba(51,209,122,.12)}
+  .opt.wrong{border-color:var(--red);background:rgba(255,85,102,.12)}
+
+  .pulse{animation:pulse 1.2s infinite}@keyframes pulse{0%,100%{filter:drop-shadow(0 0 0 transparent)}50%{filter:drop-shadow(0 0 10px var(--red))}}
+  .shake{animation:sh .4s}@keyframes sh{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(calc(-50% - 6px),-50%)}75%{transform:translate(calc(-50% + 6px),-50%)}}
+  .foot{text-align:center;color:#5f7196;font-size:12px;margin-top:26px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HUB -->
+  <section class="screen on" id="hub">
+    <div class="hero">
+      <div class="kicker mono">CYBER ATTACK LAB · محاكاة تفاعلية</div>
+      <h1>مختبر الهجمات السيبرانية</h1>
+      <p class="lead">لا تحفظ التعريفات — بل <b style="color:var(--teal)">شاهد الهجوم يحدث</b>. كل محطة محاكاة مرئية عملية: اتّخذ قرارًا، شاهد العاقبة، ثم افهم الفكرة والدفاع. مبني على محتوى الوحدة الأولى.</p>
+    </div>
+    <div class="grid" id="labGrid"></div>
+    <div class="foot mono">ملف واحد · بدون تنصيب · يعمل بدون إنترنت · للحاسوب والجوّال</div>
+  </section>
+
+  <!-- LAB -->
+  <section class="screen" id="lab">
+    <div class="labtop">
+      <div class="labtitle">
+        <div class="ic" id="labIc"></div>
+        <div><h2 id="labTitle"></h2><div class="s" id="labSub"></div></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost sm" id="backBtn">▶ كل المختبرات</button>
+        <button class="btn sm" id="nextLabBtn" style="display:none">المحطة التالية ◀</button>
+      </div>
+    </div>
+    <div id="labBody"></div>
+  </section>
+
+</div>
+
+<script>
+const $=(s,r=document)=>r.querySelector(s);
+const el=(t,c,h)=>{const e=document.createElement(t);if(c)e.className=c;if(h!=null)e.innerHTML=h;return e;};
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));$('#'+id).classList.add('on');window.scrollTo({top:0,behavior:'smooth'});}
+
+/* ---------- SVG icons ---------- */
+const IC={
+ mail:(c='#4a9eff')=>`<svg width="30" height="30" viewBox="0 0 24 24" fill="none"><rect x="2" y="5" width="20" height="14" rx="2" stroke="${c}" stroke-width="1.8"/><path d="M3 7l9 6 9-6" stroke="${c}" stroke-width="1.8"/></svg>`,
+ server:(c='#29d0b8')=>`<svg width="46" height="52" viewBox="0 0 46 52"><g stroke="${c}" stroke-width="2" fill="#0c1424"><rect x="6" y="4" width="34" height="13" rx="3"/><rect x="6" y="20" width="34" height="13" rx="3"/><rect x="6" y="36" width="34" height="13" rx="3"/></g><g fill="${c}"><circle cx="13" cy="10.5" r="1.6"/><circle cx="13" cy="26.5" r="1.6"/><circle cx="13" cy="42.5" r="1.6"/></g></svg>`,
+ pc:(c='#4a9eff')=>`<svg width="46" height="42" viewBox="0 0 46 42"><rect x="4" y="4" width="38" height="26" rx="3" fill="#0c1424" stroke="${c}" stroke-width="2"/><rect x="9" y="9" width="28" height="16" rx="1.5" fill="${c}" opacity=".22"/><path d="M18 34h10l2 4H16z" fill="${c}"/></svg>`,
+ user:(c='#33d17a')=>`<svg width="40" height="44" viewBox="0 0 40 44"><circle cx="20" cy="13" r="9" fill="#0c1424" stroke="${c}" stroke-width="2"/><path d="M4 42c0-9 7-15 16-15s16 6 16 15" fill="#0c1424" stroke="${c}" stroke-width="2"/></svg>`,
+ attacker:(c='#ff5566')=>`<svg width="42" height="46" viewBox="0 0 42 46"><path d="M8 20a13 13 0 0126 0v3H8z" fill="#0c1424" stroke="${c}" stroke-width="2"/><rect x="12" y="17" width="18" height="6" rx="3" fill="${c}"/><path d="M4 44c0-9 7-15 17-15s17 6 17 15" fill="#0c1424" stroke="${c}" stroke-width="2"/></svg>`,
+ bot:(c='#ff5566')=>`<svg width="30" height="30" viewBox="0 0 30 30"><rect x="4" y="5" width="22" height="16" rx="2" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><circle cx="11" cy="13" r="2" fill="${c}"/><circle cx="19" cy="13" r="2" fill="${c}"/><path d="M12 26h6" stroke="${c}" stroke-width="1.8"/></svg>`,
+ lock:(c='#ff5566',s=22)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" fill="${c}"/><path d="M8 10V7a4 4 0 018 0v3" stroke="${c}" stroke-width="2" fill="none"/></svg>`,
+ file:(c='#8ea3c4')=>`<svg width="24" height="28" viewBox="0 0 24 28"><path d="M4 2h11l5 5v19a1 1 0 01-1 1H4a1 1 0 01-1-1V3a1 1 0 011-1z" fill="#0e1728" stroke="${c}" stroke-width="1.6"/><path d="M15 2v5h5" stroke="${c}" stroke-width="1.6" fill="none"/></svg>`,
+ shield:(c='#33d17a',s=46)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 2l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V5z" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><path d="M8.5 12l2.5 2.5 4.5-5" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`,
+ worm:(c='#ffb02e')=>`<svg width="46" height="46" viewBox="0 0 46 46"><path d="M8 30c0-6 6-6 6-12s8-8 12-4" stroke="${c}" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="30" cy="14" r="5" fill="${c}"/></svg>`,
+ horse:(c='#c98f2c')=>`<svg width="46" height="46" viewBox="0 0 52 46"><path d="M6 34h34v-8c0-7-6-12-14-12H16C10 14 6 19 6 26z" fill="#3a2a16" stroke="${c}" stroke-width="2"/><path d="M34 18c3-2 8-6 10-14 1 6-1 12-4 16" fill="#3a2a16" stroke="${c}" stroke-width="2"/><rect x="11" y="34" width="3" height="6" fill="${c}"/><rect x="31" y="34" width="3" height="6" fill="${c}"/><circle cx="15" cy="42" r="4" fill="none" stroke="${c}" stroke-width="2"/><circle cx="33" cy="42" r="4" fill="none" stroke="${c}" stroke-width="2"/></svg>`,
+ globe:(c='#4a9eff')=>`<svg width="46" height="46" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18" stroke="${c}" stroke-width="1.4" fill="none"/></svg>`,
+ db:(c='#33d17a')=>`<svg width="46" height="46" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><path d="M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6" fill="none" stroke="${c}" stroke-width="1.8"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3" stroke="${c}" stroke-width="1.5" fill="none"/></svg>`,
+ code:(c='#4a9eff')=>`<svg width="46" height="46" viewBox="0 0 24 24"><path d="M9 8l-4 4 4 4M15 8l4 4-4 4" stroke="${c}" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+ keyboard:(c='#ffb02e')=>`<svg width="46" height="46" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2" fill="#0c1424" stroke="${c}" stroke-width="1.6"/><g fill="${c}"><rect x="5" y="9" width="2" height="2"/><rect x="9" y="9" width="2" height="2"/><rect x="13" y="9" width="2" height="2"/><rect x="17" y="9" width="2" height="2"/><rect x="7" y="13" width="10" height="2" rx="1"/></g></svg>`,
+ wifi:(c='#12b3a5')=>`<svg width="46" height="46" viewBox="0 0 24 24"><path d="M4 9a13 13 0 0116 0M7 12.5a8 8 0 0110 0M10 16a3.5 3.5 0 014 0" stroke="${c}" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="12" cy="19" r="1.4" fill="${c}"/></svg>`,
+ key:(c='#9b6dff')=>`<svg width="46" height="46" viewBox="0 0 24 24"><circle cx="8" cy="8" r="4.5" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><path d="M11 11l8 8M16 16l2-2M18 18l2-2" stroke="${c}" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`,
+ eye:(c='#ff5566')=>`<svg width="46" height="46" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><circle cx="12" cy="12" r="3" fill="${c}"/></svg>`,
+ dnsic:(c='#4a9eff')=>`<svg width="46" height="46" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><path d="M7 10h10M7 13h6" stroke="${c}" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+ spoof:(c='#ff5566')=>`<svg width="46" height="46" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2" fill="#0c1424" stroke="${c}" stroke-width="1.6"/><circle cx="8.5" cy="12" r="2.4" fill="${c}"/><path d="M13 10h5M13 13.5h5" stroke="${c}" stroke-width="1.5" stroke-linecap="round"/></svg>`,
+ ghost:(c='#9b6dff')=>`<svg width="46" height="46" viewBox="0 0 24 24"><path d="M6 20V11a6 6 0 0112 0v9l-2-1.5L14 20l-2-1.5L10 20l-2-1.5z" fill="#0c1424" stroke="${c}" stroke-width="1.6"/><circle cx="9.5" cy="11" r="1.2" fill="${c}"/><circle cx="14.5" cy="11" r="1.2" fill="${c}"/></svg>`,
+ botnet:(c='#ff5566')=>`<svg width="46" height="46" viewBox="0 0 24 24"><g stroke="${c}" stroke-width="1.4"><path d="M12 12L5 5M12 12l7-7M12 12l-7 7M12 12l7 7"/></g><circle cx="12" cy="12" r="2.5" fill="${c}"/><g fill="#0c1424" stroke="${c}" stroke-width="1.4"><circle cx="5" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></g></svg>`,
+ firewall:(c='#33d17a')=>`<svg width="46" height="46" viewBox="0 0 24 24"><g stroke="${c}" stroke-width="1.5" fill="#0c1424"><rect x="3" y="5" width="18" height="4.6"/><rect x="3" y="9.6" width="18" height="4.6"/><rect x="3" y="14.2" width="18" height="4.6"/></g><g stroke="${c}" stroke-width="1.4"><path d="M9 5v4.6M15 5v4.6M12 9.6v4.6M18 9.6v4.6M6 9.6v4.6M9 14.2v4.6M15 14.2v4.6"/></g></svg>`,
+ clock:(c='#ffb02e')=>`<svg width="46" height="46" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><path d="M12 7v5l3.5 2" stroke="${c}" stroke-width="1.8" fill="none" stroke-linecap="round"/></svg>`,
+ triad:(c='#29d0b8')=>`<svg width="46" height="46" viewBox="0 0 24 24"><path d="M12 3l9 16H3z" fill="#0c1424" stroke="${c}" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="14.5" r="2.3" fill="${c}"/></svg>`,
+ phone:(c='#4a9eff',s=46)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A15 15 0 013 6a2 2 0 012-2z" fill="#0c1424" stroke="${c}" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+ mobile:(c='#33d17a',s=46)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.6" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><line x1="10" y1="18.6" x2="14" y2="18.6" stroke="${c}" stroke-width="1.6" stroke-linecap="round"/></svg>`,
+ usb:(c='#ffb02e')=>`<svg width="46" height="46" viewBox="0 0 24 24"><rect x="9" y="2.5" width="6" height="12" rx="1.2" fill="#0c1424" stroke="${c}" stroke-width="1.6"/><rect x="10.5" y="5.5" width="3" height="3" fill="${c}"/><path d="M12 14.5v6" stroke="${c}" stroke-width="1.8"/><rect x="8" y="20" width="8" height="2.6" rx="1" fill="${c}"/></svg>`,
+ cloud:(c='#29d0b8')=>`<svg width="46" height="46" viewBox="0 0 24 24"><path d="M7 18.5a4 4 0 01-.3-8A5.2 5.2 0 0117 9.3a3.6 3.6 0 010 9.2z" fill="#0c1424" stroke="${c}" stroke-width="1.6"/><path d="M12 11v5m0 0l-2.2-2.2M12 16l2.2-2.2" stroke="${c}" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>`,
+ link:(c='#4a9eff')=>`<svg width="46" height="46" viewBox="0 0 24 24"><path d="M9 15l6-6M8 12l-2 2a3 3 0 004 4l2-2M16 12l2-2a3 3 0 00-4-4l-2 2" stroke="${c}" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+ warn:(c='#ffb02e',s=46)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24"><path d="M12 3l10 18H2z" fill="#0c1424" stroke="${c}" stroke-width="1.8" stroke-linejoin="round"/><path d="M12 9v5" stroke="${c}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="17.4" r="1.2" fill="${c}"/></svg>`,
+ cpu:(c='#ffb02e')=>`<svg width="46" height="46" viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="10" rx="1.5" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><rect x="10" y="10" width="4" height="4" fill="${c}"/><g stroke="${c}" stroke-width="1.5" stroke-linecap="round"><path d="M9 7V4M12 7V4M15 7V4M9 20v-3M12 20v-3M15 20v-3M7 9H4M7 12H4M7 15H4M20 9h-3M20 12h-3M20 15h-3"/></g></svg>`,
+ door:(c='#4a9eff')=>`<svg width="46" height="46" viewBox="0 0 24 24"><rect x="5" y="3" width="12" height="18" rx="1" fill="#0c1424" stroke="${c}" stroke-width="1.8"/><circle cx="14" cy="12" r="1.3" fill="${c}"/></svg>`,
+ print:(c='#12b3a5')=>`<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="1.5" stroke-linecap="round"><path d="M12 4a8 8 0 018 8v3M4 12a8 8 0 013.5-6.6M8 12a4 4 0 018 0v4M12 12v5M16 15v2M6 15v-3a6 6 0 011.5-4"/></svg>`,
+};
+function chip(bg){return `background:${bg}22;border:1px solid ${bg}55`;}
+
+/* ---------- diagram / packet engine ---------- */
+function Diagram(host,h){
+ const wrap=el('div','diagram');if(h)wrap.style.height=h;
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+ wrap.appendChild(svg);host.appendChild(wrap);
+ const nodes={},links=[];let W=0,H=0;
+ function measure(){W=wrap.clientWidth;H=wrap.clientHeight;svg.setAttribute('viewBox',`0 0 ${W} ${H}`);draw();}
+ function px(n){return {x:n.xp/100*W,y:n.yp/100*H};}
+ function addNode(id,xp,yp,html,lbl){const n=el('div','node');n.style.left=xp+'%';n.style.top=yp+'%';
+   n.innerHTML=`<div class="box">${html}</div>`+(lbl?`<div class="lbl">${lbl}</div>`:'');
+   wrap.appendChild(n);nodes[id]={xp,yp,dom:n};return nodes[id];}
+ function link(a,b,color='#243450',w=2,dash=''){links.push({a,b,color,w,dash});}
+ function draw(){svg.innerHTML='';links.forEach(l=>{const A=px(nodes[l.a]),B=px(nodes[l.b]);
+   const ln=document.createElementNS('http://www.w3.org/2000/svg','line');
+   ln.setAttribute('x1',A.x);ln.setAttribute('y1',A.y);ln.setAttribute('x2',B.x);ln.setAttribute('y2',B.y);
+   ln.setAttribute('stroke',l.color);ln.setAttribute('stroke-width',l.w);if(l.dash)ln.setAttribute('stroke-dasharray',l.dash);
+   svg.appendChild(ln);});}
+ const timers=new Set();
+ function packet(aId,bId,{color='#ff5566',dur=700,onDone,size=9}={}){
+   const A=px(nodes[aId]),B=px(nodes[bId]);const p=el('div','pk');p.style.color=color;p.style.background=color;
+   p.style.width=size+'px';p.style.height=size+'px';wrap.appendChild(p);
+   const t0=performance.now();
+   function step(t){const k=Math.min(1,(t-t0)/dur);const x=A.x+(B.x-A.x)*k,y=A.y+(B.y-A.y)*k;
+     p.style.left=x+'px';p.style.top=y+'px';if(k<1){const id=requestAnimationFrame(step);timers.add(id);}else{p.remove();onDone&&onDone();}}
+   const id=requestAnimationFrame(step);timers.add(id);
+ }
+ function removeNode(id){if(nodes[id]){nodes[id].dom.remove();delete nodes[id];draw();}}
+ function destroy(){timers.forEach(id=>cancelAnimationFrame(id));}
+ setTimeout(measure,20);window.addEventListener('resize',measure);
+ return {addNode,removeNode,link,packet,nodes,measure,destroy,el:wrap};
+}
+
+/* ---------- explanation panel ---------- */
+function explain(host,kind,title,rowsHtml){
+ const box=el('div','explain on');
+ box.innerHTML=`<div class="exhead ${kind}">${kind==='good'?'✔':kind==='bad'?'✘':'ℹ'} ${title}</div><div class="exbody">${rowsHtml}</div>`;
+ host.appendChild(box);box.scrollIntoView({behavior:'smooth',block:'nearest'});return box;
+}
+function rows(arr){return arr.map(r=>`<div class="row"><span class="dot ${r[0]}"></span><div>${r[1]}</div></div>`).join('');}
+
+/* ================= LABS ================= */
+let curDiagram=null,labTimers=[];
+function addT(id){labTimers.push(id);return id;}
+function clearLab(){labTimers.forEach(t=>{clearTimeout(t);clearInterval(t);});labTimers=[];if(curDiagram){curDiagram.destroy();curDiagram=null;}$('#labBody').innerHTML='';}
+
+const LABS=[
+/* ---- 1. Phishing ---- */
+{id:'phishing',title:'التصيّد الاحتيالي',sub:'Phishing — قرارك يصنع الفرق',color:'#4a9eff',icon:IC.mail,
+ build(){const b=$('#labBody');
+  const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div class="mailapp"><div class="mailhdr mono"><span>📥 صندوق الوارد — Apollo Mail</span><span>الآن</span></div>
+   <div class="mail"><div class="from"><div class="av">A</div><div><b>Apollo Bank</b> &lt;security@<span class="hl" title="نطاق مكتوب خطأ: app1o بدل apollo">app1o</span>-bank.co&gt;<br><span style="color:var(--mut);font-size:11px">إلى: أنت</span></div></div>
+   <div class="subj">⚠ <span class="hl" title="استعجال وتهديد لدفعك للتصرّف بذعر">تحذير عاجل: سيتم تعليق حسابك خلال 30 دقيقة!</span></div>
+   <div class="body">عزيزنا العميل، رصدنا محاولة دخول مشبوهة. لتأمين حسابك فورًا، أكّد بياناتك عبر الرابط:<br>
+   <a class="fakebtn" id="phLink">تأكيد الحساب الآن</a><br><span style="color:var(--mut);font-size:11px">الرابط: http://<span class="hl" title="نطاق غريب واتصال غير مشفّر http">apollo-verify.tk</span>/login</span></div></div></div>`;
+  const controls=el('div','controls');
+  controls.innerHTML=`<button class="btn red" id="openBtn">افتح الرابط</button><button class="btn" id="delBtn">احذف وبلّغ 🛡</button>
+   <span style="color:var(--mut);font-size:12px">مرّر فوق الأجزاء <span class="hl">المظلّلة</span> لرؤية العلامات الحمراء</span>`;
+  b.appendChild(stage);b.appendChild(controls);
+  const flags=rows([['r','<b>النطاق مزيّف:</b> app1o-bank.co (ليس apollo الرسمي)'],['r','<b>استعجال وتهديد:</b> «خلال 30 دقيقة» لدفعك للذعر'],['r','<b>رابط مريب:</b> نطاق .tk واتصال http غير مشفّر'],['g','<b>الدفاع:</b> لا تنقر، افتح موقع البنك بنفسك، وفعّل MFA، وبلّغ الأمن']]);
+  function openPath(){
+    stage.querySelector('.mailapp').insertAdjacentHTML('beforeend',
+     `<div class="fakepage" id="fp"><div style="color:var(--blue);font-weight:bold">🔒 بوابة Apollo Bank الآمنة</div>
+      <input class="inp" placeholder="اسم المستخدم" value="user@apollo"><input class="inp" type="password" placeholder="كلمة المرور" value="••••••••">
+      <div id="fpstatus" style="margin-top:8px;color:var(--mut);font-size:13px">جارٍ تسجيل الدخول...</div></div>`);
+    $('#openBtn').disabled=true;$('#delBtn').disabled=true;
+    addT(setTimeout(()=>{$('#fpstatus').innerHTML='<span style="color:var(--red)">✘ تم إرسال بياناتك إلى المهاجم!</span>';
+      stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.25)';},1100));
+    addT(setTimeout(()=>{explain(b,'bad','ماذا حدث؟ وقعت في التصيّد',
+      `دخلت صفحة <b>مزيّفة</b> تطابق شكل البنك، فسُرقت بيانات دخولك فورًا وقد يُفرغ حسابك أو تُنتحل هويتك.<br><br>`+flags);},1700));
+  }
+  function safePath(){
+    $('#openBtn').disabled=true;$('#delBtn').disabled=true;
+    stage.querySelector('.mail').style.opacity=.35;
+    stage.querySelector('.mailapp').insertAdjacentHTML('beforeend',`<div style="text-align:center;margin-top:10px">${IC.shield('#33d17a',64)}</div>`);
+    explain(b,'good','قرار سليم — تجنّبت التصيّد',
+      `لم تنقر ولم تُدخل بياناتك، فبقيت حسابك آمنًا. هذا بالضبط الفرق: <b>النقر يكلّفك حسابك، والتجاهل يحميك</b>.<br><br>`+
+      `والآن لنكشف العلامات الحمراء التي فضحت الرسالة:<br>`+flags);
+  }
+  $('#openBtn').onclick=openPath;$('#delBtn').onclick=safePath;
+  markUnlock();
+ }},
+
+/* ---- 2. DoS vs DDoS ---- */
+{id:'dos',title:'DoS مقابل DDoS',sub:'إغراق الخدمة — الفرق بين مصدر واحد وجيش',color:'#ff5566',icon:IC.server,
+ build(){const b=$('#labBody');
+  const stage=el('div','stage stagegrid');
+  const seg=el('div','seg');seg.innerHTML=`<button class="on" data-m="dos">DoS — مهاجم واحد</button><button data-m="ddos">DDoS — Botnet موزّع</button>`;
+  b.appendChild(stage);
+  const D=Diagram(stage,'300px');curDiagram=D;
+  D.addNode('srv',50,45,IC.server('#29d0b8'),'الخادم (Apollo)');
+  D.addNode('user',50,90,IC.user('#33d17a'),'مستخدم شرعي');
+  D.link('user','srv','#33d17a55',2,'');
+  // meter + status overlay under server
+  stage.insertAdjacentHTML('beforeend',`<div style="max-width:320px;margin:0 auto"><div class="mono" style="display:flex;justify-content:space-between;font-size:12px;color:var(--mut)"><span>حِمل الخادم</span><span id="loadPct">0%</span></div><div class="meter"><i id="loadBar"></i></div></div>`);
+  const controls=el('div','controls');
+  controls.appendChild(seg);
+  controls.insertAdjacentHTML('beforeend',`<button class="btn red" id="attackBtn">شنّ الهجوم</button><button class="btn ghost sm" id="resetBtn">↺ إعادة</button>`);
+  b.appendChild(controls);
+  b.insertAdjacentHTML('beforeend',`<div class="readout"><div class="ro"><div class="l">المصدر</div><div class="v" id="roSrc">—</div></div><div class="ro"><div class="l">سرعة الإسقاط</div><div class="v" id="roSpd">—</div></div><div class="ro"><div class="l">صعوبة الصدّ</div><div class="v" id="roHard">—</div></div><div class="ro"><div class="l">حالة المستخدم الشرعي</div><div class="v" id="roUser" style="color:var(--green)">متصل ✓</div></div></div>`);
+  let mode='dos',load=0,srcIds=[],running=false;
+  function setMode(m){mode=m;[...seg.children].forEach(x=>x.classList.toggle('on',x.dataset.m===m));reset();
+    $('#roSrc').textContent=m==='dos'?'مهاجم واحد':'آلاف الأجهزة (Botnet)';
+    $('#roSpd').textContent=m==='dos'?'تدريجية':'فورية وحادّة';
+    $('#roHard').textContent=m==='dos'?'أسهل نسبيًا (حظر IP واحد)':'صعبة جدًا (مصادر موزّعة)';
+  }
+  function clearSources(){srcIds.forEach(id=>D.removeNode(id));srcIds=[];}
+  function reset(){running=false;load=0;upd();clearSources();$('#roUser').innerHTML='متصل ✓';$('#roUser').style.color='var(--green)';stage.style.boxShadow='';
+    const ex=$('.explain',b);if(ex)ex.remove();
+    if(mode==='dos'){D.addNode('atk',16,20,IC.attacker(),'مهاجم');srcIds.push('atk');}
+    else{const pos=[[10,14],[26,11],[42,13],[12,34],[90,13],[80,11],[64,13],[88,34]];pos.forEach((p,i)=>{D.addNode('bot'+i,p[0],p[1],IC.bot(),i===0?'Botnet':'');srcIds.push('bot'+i);});}
+  }
+  function upd(){load=Math.max(0,Math.min(100,load));$('#loadBar').style.width=load+'%';$('#loadPct').textContent=Math.round(load)+'%';
+    $('#loadBar').style.background=load>85?'linear-gradient(90deg,#ff3b52,#ff7a88)':load>55?'linear-gradient(90deg,#ffb02e,#ffd76b)':'linear-gradient(90deg,#33d17a,#29d0b8)';}
+  function attack(){if(running)return;running=true;const sources=srcIds.slice();
+    const iv=setInterval(()=>{if(!running)return;
+      sources.forEach(s=>D.packet(s,'srv',{color:'#ff5566',dur:mode==='dos'?800:520}));
+      load+=mode==='dos'?4:11;upd();
+      if(load>=100){clearInterval(iv);load=100;upd();down();}
+    },mode==='dos'?520:360);addT(iv);
+    // legit user keeps trying
+    const uiv=setInterval(()=>{if(!running){clearInterval(uiv);return;}
+      D.packet('user','srv',{color: load<100?'#33d17a':'#8ea3c4',dur:900});},1400);addT(uiv);
+  }
+  function down(){running=false;stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.28)';
+    D.nodes.srv.dom.querySelector('.box').classList.add('shake');
+    $('#roUser').innerHTML='فشل الاتصال ✗ (الخدمة معطّلة)';$('#roUser').style.color='var(--red)';
+    explain(b, 'bad', mode==='dos'?'حدث DoS — حجب خدمة':'حدث DDoS — حجب خدمة موزّع',
+      mode==='dos'
+      ? `مهاجم <b>واحد</b> أغرق الخادم بالطلبات حتى امتلأ حِمله (100%)، فعجز عن خدمة المستخدم الشرعي. الدفاع أسهل: يمكن حظر عنوان IP المصدر.<br><br>`+rows([['r','المصدر: جهاز واحد'],['g','الدفاع: جدار حماية + حظر المصدر + حدّ للطلبات (Rate limiting)']])
+      : `شبكة <b>Botnet</b> من آلاف الأجهزة المصابة (Zombies) أغرقت الخادم <b>في آنٍ واحد</b>، فانهار أسرع بكثير ويصعب صدّه لأن المصادر موزّعة حول العالم.<br><br>`+rows([['r','المصدر: آلاف الأجهزة الموزّعة'],['r','أسرع وأصعب في الصدّ من DoS'],['g','الدفاع: خدمات مكافحة DDoS + توزيع الحِمل (CDN) + تصفية الحركة']]));
+  }
+  seg.querySelectorAll('button').forEach(x=>x.onclick=()=>setMode(x.dataset.m));
+  $('#attackBtn').onclick=attack;$('#resetBtn').onclick=reset;
+  setMode('dos');markUnlock();
+ }},
+
+/* ---- 3. Trojan ---- */
+{id:'trojan',title:'حصان طروادة',sub:'Trojan — الهديّة التي تُخفي جنودًا',color:'#c98f2c',icon:IC.horse,
+ build(){const b=$('#labBody');
+  const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:420px;margin:0 auto 6px"><div class="mail" style="animation:none"><div class="subj" style="margin-top:0">🎮 لعبة مجانية رائعة — النسخة الكاملة!</div>
+   <div class="body">حمّل «Apollo Racer Pro» مجانًا الآن. تقييم ٥ نجوم ⭐⭐⭐⭐⭐<br><a class="fakebtn" id="installBtn" style="background:var(--amber)">⬇ تثبيت مجاني</a></div></div></div>
+   <div class="scene3" id="scene3"><div class="ground"></div>
+     <div class="pc-target">${IC.pc('#4a9eff')}<div class="lbl" style="color:var(--mut);font-size:11px">جهازك</div>
+       <svg id="doorSvg" width="0" height="0"></svg></div>
+   </div>`;
+  b.appendChild(stage);
+  const controls=el('div','controls');controls.innerHTML=`<span style="color:var(--mut);font-size:13px">اضغط «تثبيت» لترى ماذا يحدث فعلًا خلف الكواليس…</span><button class="btn ghost sm" id="reBtn" style="display:none">↺ إعادة</button>`;
+  b.appendChild(controls);
+  const scene=$('#scene3',stage);
+  $('#installBtn',stage).onclick=function(){this.style.pointerEvents='none';this.textContent='جارٍ التثبيت…';
+   // horse rolls in from right
+   const horse=el('div');horse.style.cssText='position:absolute;bottom:42px;right:-90px;transition:right 1.4s ease';horse.innerHTML=`<div style="transform:scale(1.5)">${IC.horse()}</div>`;scene.appendChild(horse);
+   addT(setTimeout(()=>horse.style.right='40%',60));
+   addT(setTimeout(()=>{ // belly opens -> soldiers drop
+     horse.querySelector('svg').style.transition='.4s';horse.querySelector('svg').style.transform='scale(1.5) rotate(-4deg)';
+     for(let i=0;i<4;i++){const s=el('div','soldier');s.style.right=(38+i*3.5)+'%';scene.appendChild(s);
+       addT(setTimeout(()=>{s.style.transition='.5s';s.style.opacity='1';s.style.bottom=(46+Math.random()*8)+'px';},i*160));}
+   },1500));
+   addT(setTimeout(()=>{ // attacker enters through backdoor
+     const atk=el('div');atk.style.cssText='position:absolute;bottom:42px;left:2%;opacity:0;transition:.6s';atk.innerHTML=IC.attacker();atk.className='pulse';scene.appendChild(atk);
+     addT(setTimeout(()=>{atk.style.opacity='1';atk.style.left='16%';},50));
+     stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';
+   },2500));
+   addT(setTimeout(()=>{explain(b,'bad','ماذا حدث؟ هذا هو Trojan',
+     `البرنامج بدا <b>هديّة نافعة</b> (لعبة)، لكنه كان يُخفي حمولة خبيثة. بمجرد تشغيله، «فتح الباب» للمهاجم ليدخل جهازك — تمامًا كأسطورة <b>حصان طروادة</b>: جنود مختبئون داخل هديّة خشبية.<br><br>`+
+     rows([['r','لا يتكاثر ذاتيًا — يعتمد على <b>خداعك لتشغيله</b>'],['r','قد يفتح Backdoor أو يسرق بيانات أو يثبّت برمجيات أخرى'],['g','الدفاع: نزّل من مصادر رسمية فقط، لا تثبّت برامج مقرصنة/مجهولة، واستخدم مضاد فيروسات محدّث']]));
+     $('#reBtn').style.display='';
+   },3300));
+  };
+  $('#reBtn',stage) && ($('#reBtn').onclick=()=>LABS.find(l=>l.id==='trojan').build());
+  markUnlock();
+ }},
+
+/* ---- 4. Virus vs Worm ---- */
+{id:'worm',title:'Virus مقابل Worm',sub:'الفرق في طريقة الانتشار',color:'#ffb02e',icon:IC.worm,
+ build(){const b=$('#labBody');
+  const stage=el('div','stage stagegrid');
+  const seg=el('div','seg');seg.innerHTML=`<button class="on" data-m="virus">Virus — يحتاج تشغيلًا</button><button data-m="worm">Worm — ينتشر ذاتيًا</button>`;
+  b.appendChild(stage);
+  const D=Diagram(stage,'300px');curDiagram=D;
+  const grid=[];const cols=4,rowsN=3;
+  for(let r=0;r<rowsN;r++)for(let c=0;c<cols;c++){const id='n'+r+c;const xp=14+c*24,yp=18+r*30;
+    grid.push({id,r,c,inf:false});D.addNode(id,xp,yp,IC.pc('#4a9eff'),'');}
+  // links: grid neighbors
+  function nb(r,c){return grid.find(g=>g.r===r&&g.c===c);}
+  grid.forEach(g=>{const right=nb(g.r,g.c+1),down=nb(g.r+1,g.c);if(right)D.link(g.id,right.id,'#24345088',1.5);if(down)D.link(g.id,down.id,'#24345088',1.5);});
+  const controls=el('div','controls');controls.appendChild(seg);
+  controls.insertAdjacentHTML('beforeend',`<button class="btn red" id="goBtn">ابدأ العدوى</button><button class="btn ghost sm" id="rsBtn">↺ إعادة</button><span class="mono" id="cnt" style="color:var(--mut);font-size:12px">المصاب: 0 / 12</span>`);
+  b.appendChild(controls);
+  let mode='virus';
+  function setInf(g,on){g.inf=on;const box=D.nodes[g.id].dom.querySelector('.box');box.innerHTML=on?IC.pc('#ff5566'):IC.pc('#4a9eff');if(on)box.classList.add('pulse');else box.classList.remove('pulse');}
+  function count(){const n=grid.filter(g=>g.inf).length;$('#cnt').textContent='المصاب: '+n+' / 12';return n;}
+  function reset(){grid.forEach(g=>setInf(g,false));count();const ex=$('.explain',b);if(ex)ex.remove();$('#goBtn').disabled=false;}
+  function setMode(m){mode=m;[...seg.children].forEach(x=>x.classList.toggle('on',x.dataset.m===m));reset();
+    $('#goBtn').textContent=m==='virus'?'شغّل الملف المصاب':'أطلق الدودة';}
+  function virus(){ // infect one; each click spreads to immediate neighbors only (needs user action)
+    let seed=grid.find(g=>!g.inf&&(g.r===0&&g.c===0))||grid.find(g=>g.inf);
+    const infected=grid.filter(g=>g.inf);
+    if(infected.length===0){setInf(grid[0],true);count();
+      explain(b,'info','فيروس (Virus): علّق بملف',`أصاب ملفًا واحدًا فقط، ولن ينتشر إلا حين <b>تشغّل</b> ملفًا مصابًا مرة أخرى. اضغط الزر ثانيةً لترى أنه يحتاج تدخّلك في كل مرة.`);
+      $('#goBtn').textContent='شغّل ملفًا مصابًا آخر';return;}
+    // spread to neighbors of infected (one step) — but only because user clicked
+    let added=0;infected.forEach(g=>{[nb(g.r,g.c+1),nb(g.r,g.c-1),nb(g.r+1,g.c),nb(g.r-1,g.c)].forEach(x=>{if(x&&!x.inf&&added<2){D.packet(g.id,x.id,{color:'#ffb02e',dur:500});setInf(x,true);added++;}});});
+    count();
+    if(added===0){$('#goBtn').disabled=true;explain(b,'info','خلاصة Virus',`لاحظ: انتشر <b>ببطء</b> ولم يتحرّك خطوة إلا بتدخّلك (تشغيل ملف). هذا جوهر الفيروس: يحتاج <b>مضيفًا وتشغيلًا</b>.<br><br>`+rows([['g','الدفاع: لا تشغّل مرفقات مجهولة، وحدّث مضاد الفيروسات']]));}
+  }
+  function worm(){ // BFS auto-spread over time, no further clicks
+    $('#goBtn').disabled=true;setInf(grid[0],true);count();let frontier=[grid[0]];
+    const iv=setInterval(()=>{const next=[];frontier.forEach(g=>{[nb(g.r,g.c+1),nb(g.r,g.c-1),nb(g.r+1,g.c),nb(g.r-1,g.c)].forEach(x=>{if(x&&!x.inf){D.packet(g.id,x.id,{color:'#ff5566',dur:400});setInf(x,true);next.push(x);}});});
+      count();frontier=next;
+      if(grid.every(g=>g.inf)){clearInterval(iv);
+        explain(b,'bad','دودة (Worm): انتشار ذاتي',`أصابت الشبكة <b>بالكامل تلقائيًا</b> وبسرعة، <b>دون أي تدخّل منك</b> بعد الإطلاق — تنتقل من جهاز لآخر عبر الشبكة وحدها. لهذا تُسبّب الديدان أوبئة رقمية عالمية بسرعة.<br><br>`+rows([['r','لا تحتاج مضيفًا ولا تشغيلًا — تتكاثر ذاتيًا'],['g','الدفاع: التحديثات الأمنية، جدار الحماية، وعزل الجهاز المصاب فورًا']]));}
+    },700);addT(iv);
+  }
+  $('#goBtn').onclick=()=>{mode==='virus'?virus():worm();};
+  $('#rsBtn').onclick=reset;seg.querySelectorAll('button').forEach(x=>x.onclick=()=>setMode(x.dataset.m));
+  setMode('virus');markUnlock();
+ }},
+
+/* ---- 5. Ransomware ---- */
+{id:'ransom',title:'برامج الفدية',sub:'Ransomware — تشفير الملفات والابتزاز',color:'#ff5566',icon:()=>IC.lock('#ff5566',30),
+ build(){const b=$('#labBody');
+  const stage=el('div','stage stagegrid');
+  let f='';for(let i=0;i<10;i++)f+=`<div class="file" data-i="${i}">${IC.file('#8ea3c4')}<div class="lockov">${IC.lock('#ff5566',20)}</div></div>`;
+  stage.innerHTML=`<div style="text-align:center;color:var(--mut);font-size:12px;margin-bottom:8px">📁 ملفاتك المهمّة (مستندات، صور، مشاريع)</div><div class="files">${f}</div><div id="ransomHost"></div>`;
+  b.appendChild(stage);
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn red" id="runBtn">شغّل المرفق «فاتورة.exe»</button><button class="btn ghost sm" id="rsBtn" style="display:none">↺ إعادة</button>`;
+  b.appendChild(controls);
+  const files=[...stage.querySelectorAll('.file')];
+  $('#runBtn').onclick=function(){this.disabled=true;
+    files.forEach((fl,i)=>addT(setTimeout(()=>fl.classList.add('enc'),200+i*160)));
+    addT(setTimeout(()=>{stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.25)';
+      $('#ransomHost',stage).innerHTML=`<div class="ransom"><div style="font-size:28px">${IC.lock('#ff5566',34)}</div>
+        <div style="color:var(--red);font-weight:bold;font-size:16px;margin:6px 0">تم تشفير كل ملفاتك!</div>
+        <div style="color:#d6e2f5;font-size:13px;line-height:1.8">ادفع <b>500$</b> بعملة رقمية خلال 48 ساعة لاستعادة بياناتك.</div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:12px"><button class="btn red sm" id="payBtn">ادفع الفدية</button><button class="btn sm" id="restoreBtn">استعِد من نسخة احتياطية</button></div></div>`;
+      $('#payBtn').onclick=()=>{explain(b,'bad','دفعت الفدية — قرار خطير',`لا يوجد أي ضمان لاستعادة ملفاتك، وقد تخسر <b>المال والملفات معًا</b>، وتشجّع المجرمين على استهدافك مجددًا.<br><br>`+rows([['r','الدفع يموّل الجريمة ولا يضمن شيئًا'],['g','الوقاية الحقيقية: نسخ احتياطي منتظم ومعزول عن الشبكة']]));};
+      $('#restoreBtn').onclick=()=>{files.forEach((fl,i)=>addT(setTimeout(()=>fl.classList.remove('enc'),i*120)));stage.style.boxShadow='';
+        explain(b,'good','استعدت من النسخة الاحتياطية — أحسنت',`لأنك تحتفظ بنسخة احتياطية <b>معزولة</b>، استعدت ملفاتك دون دفع أي فدية، وفقد الابتزاز قوّته تمامًا.<br><br>`+rows([['g','النسخ الاحتياطي المنتظم هو أقوى دفاع ضد Ransomware'],['g','حدّث الأنظمة ولا تفتح مرفقات مجهولة لتتجنّب الإصابة أصلًا']]));};
+      $('#rsBtn').style.display='';
+    },200+10*160+300));
+  };
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='ransom').build();
+  markUnlock();
+ }},
+
+/* ---- 6. MITM ---- */
+{id:'mitm',title:'الرجل في الوسط',sub:'MITM — لماذا HTTPS يحميك',color:'#9b6dff',icon:IC.globe,
+ build(){const b=$('#labBody');
+  const stage=el('div','stage stagegrid');
+  const seg=el('div','seg');seg.innerHTML=`<button data-m="http" class="on">HTTP — غير مشفّر</button><button data-m="https">HTTPS — مشفّر</button>`;
+  b.appendChild(stage);
+  const D=Diagram(stage,'270px');curDiagram=D;
+  D.addNode('me',88,50,IC.user('#33d17a'),'أنت');
+  D.addNode('bank',12,50,IC.server('#29d0b8'),'خادم البنك');
+  D.addNode('atk',50,18,IC.attacker(),'مهاجم (في الوسط)');
+  D.link('me','bank','#24345088',2,'');D.link('me','atk','#9b6dff55',1.5,'4 4');D.link('atk','bank','#9b6dff55',1.5,'4 4');
+  stage.insertAdjacentHTML('beforeend',`<div id="mitmStatus" style="text-align:center;color:var(--mut);font-size:13px;min-height:20px">اختر البروتوكول ثم أرسل رسالة تحوي كلمة مرورك.</div>`);
+  const controls=el('div','controls');controls.appendChild(seg);
+  controls.insertAdjacentHTML('beforeend',`<button class="btn" id="sendBtn">أرسل: «كلمة المرور: 1234»</button>`);
+  b.appendChild(controls);
+  let mode='http';
+  function setMode(m){mode=m;[...seg.children].forEach(x=>x.classList.toggle('on',x.dataset.m===m));const ex=$('.explain',b);if(ex)ex.remove();$('#mitmStatus').textContent=m==='http'?'HTTP: البيانات تُرسل كنصّ واضح.':'HTTPS: البيانات مشفّرة أثناء النقل.';}
+  $('#sendBtn').onclick=()=>{
+   const secret=mode==='http'?'كلمة المرور: 1234':'x8#Qz!9a…';
+   // packet me -> atk (intercept) -> bank
+   D.packet('me','atk',{color:mode==='http'?'#ff5566':'#9b6dff',dur:700,onDone:()=>{
+     $('#mitmStatus').innerHTML= mode==='http'
+       ? `المهاجم اعترض الرسالة وقرأها: <b style="color:var(--red)">«كلمة المرور: 1234»</b>`
+       : `المهاجم اعترض الرسالة لكنها مشفّرة: <b style="color:var(--green)">«${secret}» — غير مقروءة</b>`;
+     D.packet('atk','bank',{color:mode==='http'?'#ff5566':'#9b6dff',dur:700,onDone:()=>{
+       explain(b, mode==='http'?'bad':'good', mode==='http'?'HTTP: المهاجم قرأ بياناتك':'HTTPS: بياناتك محميّة',
+        mode==='http'
+        ? `في <b>MITM</b> يجلس المهاجم بين طرفين. مع HTTP تُرسل البيانات كنصّ واضح، فيقرؤها ويعدّلها بينما تظنّ أنك تتحدّث مباشرةً مع البنك.<br><br>`+rows([['r','النصّ الواضح يُقرأ ويُعدّل بسهولة'],['g','الدفاع: استخدم HTTPS دائمًا، وتجنّب شبكات Wi-Fi العامة، واستخدم VPN']])
+        : `مع <b>HTTPS</b> (تشفير) بقيت الرسالة مُقفلة أثناء الطريق. اعترضها المهاجم لكنه رأى حروفًا مبعثرة لا معنى لها، فلم يستطع سرقة كلمة مرورك.<br><br>`+rows([['g','التشفير يجعل الاعتراض عديم الفائدة'],['g','القفل بجانب عنوان الموقع = HTTPS مفعّل']]));
+     }});
+   }});
+  };
+  seg.querySelectorAll('button').forEach(x=>x.onclick=()=>setMode(x.dataset.m));
+  setMode('http');markUnlock();
+ }},
+
+/* ---- 7. SQL Injection ---- */
+{id:'sqli',title:'حقن SQL',sub:'SQL Injection — تجاوز تسجيل الدخول',color:'#33d17a',icon:IC.db,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:480px;margin:0 auto">
+   <div style="color:var(--mut);font-size:12px;margin-bottom:8px">🔐 صفحة تسجيل الدخول — Apollo Admin</div>
+   <div class="mail" style="animation:none"><label style="font-size:12px;color:var(--mut)">اسم المستخدم</label><input class="inp" id="sqUser" value="admin">
+     <label style="font-size:12px;color:var(--mut)">كلمة المرور</label><input class="inp" id="sqPass" placeholder="اكتب أو استخدم الأزرار بالأسفل"></div>
+   <div style="color:var(--mut);font-size:12px;margin:12px 0 4px">الاستعلام المُنفَّذ على قاعدة البيانات:</div>
+   <div class="mono" id="sqQ" style="background:#080d16;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px;line-height:1.9;direction:ltr;text-align:left;color:#cfe0f5;word-break:break-word"></div>
+   <div id="sqR" style="text-align:center;margin-top:10px;font-weight:bold;min-height:22px"></div></div>`;
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn" id="okBtn">جرّب كلمة مرور عادية</button><button class="btn red" id="injBtn">احقن: ' OR '1'='1</button><button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;
+  b.appendChild(stage);b.appendChild(controls);
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  function draw(pass,inj){const u=esc($('#sqUser').value);
+   if(inj)$('#sqQ').innerHTML=`SELECT * FROM users<br>WHERE user='${u}'<br>AND pass='<span style="color:#ff5566;font-weight:bold">' OR '1'='1</span>'`;
+   else $('#sqQ').innerHTML=`SELECT * FROM users<br>WHERE user='${u}'<br>AND pass='${esc(pass||'')}'`;}
+  $('#sqPass').oninput=()=>{draw($('#sqPass').value,false);$('#sqR').textContent='';};draw('',false);
+  $('#okBtn').onclick=()=>{$('#sqPass').value='mypassword';draw('mypassword',false);$('#sqR').innerHTML='<span style="color:var(--amber)">دخول مرفوض: كلمة المرور غير صحيحة ✓ (النظام يعمل بشكل سليم)</span>';};
+  $('#injBtn').onclick=()=>{$('#sqPass').value="' OR '1'='1";draw("' OR '1'='1",true);$('#sqR').innerHTML='<span style="color:var(--red)">✘ تم تجاوز تسجيل الدخول! دخلت كأدمن بلا كلمة مرور</span>';
+   explain(b,'bad','ماذا حدث؟ هذا هو SQL Injection',`أدخلت في حقل كلمة المرور شرطًا منطقيًا <b>\'1\'=\'1\'</b> صحيحًا دائمًا، فأصبح الاستعلام يقبل أي أحد. السبب الجذري: <b>الثقة العمياء في مدخلات المستخدم</b> ودمجها مباشرةً في الاستعلام.<br><br>`+rows([['r','الإدخال غير المُنقّى يغيّر منطق الاستعلام نفسه'],['g','الدفاع: الاستعلامات المُعامَلة (Parameterized Queries) + التحقّق من المدخلات + مبدأ الصلاحيات الأدنى']]));};
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='sqli').build();markUnlock();
+ }},
+
+/* ---- 8. XSS ---- */
+{id:'xss',title:'حقن السكربت (XSS)',sub:'Cross-Site Scripting — كود يعمل في متصفّح الضحية',color:'#4a9eff',icon:IC.code,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:500px;margin:0 auto"><div style="color:var(--mut);font-size:12px;margin-bottom:8px">💬 صفحة تعليقات — منتدى Apollo</div>
+   <div id="board" style="background:#0e1728;border:1px solid var(--line);border-radius:12px;padding:12px;min-height:64px">
+     <div style="font-size:13px;color:#d6e2f5;padding:6px 0;border-bottom:1px solid var(--line)"><b style="color:var(--teal)">سارة:</b> مقال رائع، شكرًا!</div></div>
+   <input class="inp" id="cInp" placeholder="اكتب تعليقك..."><div id="xssVictim"></div></div>`;
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn" id="postBtn">انشر تعليقًا عاديًا</button><button class="btn red" id="xinjBtn">احقن سكربت &lt;script&gt;</button><button class="btn ghost sm" id="viewBtn" style="display:none">افتح الصفحة كزائر آخر ▶</button><button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;
+  b.appendChild(stage);b.appendChild(controls);
+  const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  $('#postBtn').onclick=()=>{const v=$('#cInp').value||'تعليق جميل';$('#board').insertAdjacentHTML('beforeend',`<div style="font-size:13px;color:#d6e2f5;padding:6px 0;border-bottom:1px solid var(--line)"><b style="color:var(--teal)">أنت:</b> ${esc(v)}</div>`);$('#cInp').value='';};
+  $('#xinjBtn').onclick=()=>{$('#cInp').value="<script>stealCookie()<\/script>";
+   $('#board').insertAdjacentHTML('beforeend',`<div style="font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--line);font-family:monospace;color:#ff8a97;direction:ltr;text-align:left">&lt;script&gt;stealCookie()&lt;/script&gt;</div>`);
+   $('#viewBtn').style.display='';};
+  $('#viewBtn').onclick=()=>{$('#xssVictim').innerHTML=`<div class="fakepage" style="border-color:var(--red)"><div style="color:var(--mut);font-size:12px">🧑‍💻 متصفّح زائر آخر يفتح الصفحة...</div><div id="xtoast" style="margin-top:8px;color:var(--red);font-weight:bold">...</div></div>`;
+   addT(setTimeout(()=>{$('#xtoast').innerHTML='🍪 نُفِّذ السكربت في متصفّح الضحية! سُرقت كوكيز الجلسة وأُرسلت للمهاجم';stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';
+     explain(b,'bad','ماذا حدث؟ هذا هو XSS',`لأن الموقع عرض تعليقك <b>دون تنقية</b>، نُفِّذ الكود الخبيث (JavaScript) داخل متصفّح كل زائر يفتح الصفحة، فسُرقت كوكيز جلسته. المهاجم لم يخترق الخادم، بل استغلّ <b>ثقة المتصفّح</b> في محتوى الموقع.<br><br>`+rows([['r','الإدخال غير المُنقّى يُنفَّذ كأنه جزء من الصفحة'],['g','الدفاع: تنقية وترميز المخرجات (Output Encoding) + التحقّق من المدخلات + سياسة CSP']]));},1100));};
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='xss').build();markUnlock();
+ }},
+
+/* ---- 9. Keylogger ---- */
+{id:'keylog',title:'راصد لوحة المفاتيح',sub:'Keylogger — كل ضغطة تُسجَّل وتُرسَل',color:'#ffb02e',icon:IC.keyboard,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:640px;margin:0 auto">
+   <div><div style="color:var(--mut);font-size:12px;margin-bottom:8px">🖥️ جهازك — سجّل الدخول</div><div class="mail" style="animation:none"><label style="font-size:12px;color:var(--mut)">كلمة المرور</label>
+     <input class="inp" id="klPass" type="password" placeholder="اكتب هنا..."><div style="font-size:11px;color:var(--mut);margin-top:6px">اكتب أي كلمة مرور لتجربة الأثر</div></div></div>
+   <div><div style="color:var(--red);font-size:12px;margin-bottom:8px">👁️ لوحة المهاجم <span id="klState" class="mono">(Keylogger: مُفعّل)</span></div>
+     <div id="klLog" class="mono" style="background:#180d14;border:1px solid var(--red);border-radius:12px;padding:12px;min-height:120px;direction:ltr;text-align:left;font-size:15px;color:#ff9aa6;word-break:break-all"></div></div></div>`;
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn red" id="toggleKl">أزِل برنامج التجسّس 🛡</button><button class="btn ghost sm" id="clrBtn">مسح</button>`;
+  b.appendChild(stage);b.appendChild(controls);let active=true;
+  $('#klPass').addEventListener('keydown',e=>{if(!active)return;const ch=e.key;if(ch==='Backspace'){$('#klLog').textContent=$('#klLog').textContent.slice(0,-1);return;}if(ch.length!==1)return;$('#klLog').textContent+=ch;});
+  $('#klPass').addEventListener('input',()=>{if($('#klPass').value.length>=4&&active&&!$('.explain',b))
+    explain(b,'bad','كل حرف يُرسَل للمهاجم فورًا',`برنامج <b>Keylogger</b> يسجّل كل ضغطة مفتاح — بما فيها كلمات المرور وأرقام البطاقات — ويرسلها للمهاجم دون أن تشعر. قد يصل عبر Trojan أو جهاز صغير يُوصَّل بلوحة المفاتيح.<br><br>`+rows([['r','يلتقط كل ما تكتبه سرًّا'],['g','الدفاع: مضاد تجسّس محدّث + الانتباه للأجهزة الغريبة الموصولة + المصادقة متعدّدة العوامل (MFA)']]));});
+  $('#toggleKl').onclick=function(){active=!active;$('#klState').textContent=active?'(Keylogger: مُفعّل)':'(Keylogger: أُزيل ✓)';$('#klState').style.color=active?'':'var(--green)';this.textContent=active?'أزِل برنامج التجسّس 🛡':'أعِد التفعيل';this.className=active?'btn red':'btn';};
+  $('#clrBtn').onclick=()=>$('#klLog').textContent='';markUnlock();
+ }},
+
+/* ---- 10. Evil Twin (Wi-Fi) ---- */
+{id:'eviltwin',title:'التوأم الشرير (Wi-Fi)',sub:'Evil Twin — شبكة مزيّفة تنتحل اسمًا موثوقًا',color:'#12b3a5',icon:IC.wifi,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  const nets=[{n:'Apollo_Guest',sec:'🔒 WPA2 · رسمية',t:'real',sig:'●●●○'},{n:'Apollo_Guest',sec:'⚠ مفتوحة · بلا كلمة مرور · إشارة قويّة جدًا',t:'twin',sig:'●●●●'},{n:'CoffeeShop_Free',sec:'مفتوحة',t:'other',sig:'●●○○'}];
+  let html=`<div style="max-width:500px;margin:0 auto"><div style="color:var(--mut);font-size:12px;margin-bottom:8px">📶 شبكات Wi-Fi المتاحة — أيّها تختار؟</div><div id="netList">`;
+  nets.forEach(x=>{html+=`<div class="opt" data-t="${x.t}" style="margin-bottom:8px;justify-content:space-between"><span>📶 <b>${x.n}</b> <span style="color:var(--mut);font-size:12px">${x.sec}</span></span><span class="mono" style="color:var(--mut)">${x.sig}</span></div>`;});
+  html+=`</div><div class="opt" data-t="vpn" style="border-color:var(--teal)"><b>استخدم بيانات الجوّال + VPN</b> <span style="color:var(--mut);font-size:12px">— الأكثر أمانًا</span></div><div id="etOut"></div></div>`;
+  stage.innerHTML=html;b.appendChild(stage);
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn ghost sm" id="rsBtn">↺ إعادة</button><span style="color:var(--mut);font-size:12px">لاحظ: شبكتان بنفس الاسم «Apollo_Guest»!</span>`;b.appendChild(controls);
+  stage.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{const t=o.dataset.t;stage.querySelectorAll('.opt').forEach(x=>x.style.pointerEvents='none');
+   if(t==='twin'){o.classList.add('wrong');stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';explain(b,'bad','اتّصلت بالتوأم الشرير!',`اخترت الشبكة المفتوحة التي تنتحل اسم «Apollo_Guest». إنها <b>Evil Twin</b> صنعها المهاجم؛ الآن كل بياناتك تمرّ <b>عبر جهازه</b> فيقرؤها ويعدّلها.<br><br>`+rows([['r','الاسم المألوف والإشارة القويّة فخّ شائع'],['g','الدفاع: تأكّد من الشبكة الرسمية + فضّل المؤمّنة (WPA2) + استخدم VPN + تجنّب المفتوحة']]));}
+   else if(t==='real'){o.classList.add('correct');explain(b,'good','اختيار جيّد — الشبكة الرسمية المؤمّنة',`اخترت الشبكة المؤمّنة بـ WPA2 — أفضل من المفتوحة. ابقَ حذرًا على الشبكات العامة واستخدم VPN لحماية إضافية.<br><br>`+rows([['g','الشبكة المؤمّنة أصعب على المهاجم'],['g','VPN يضيف طبقة تشفير على أي شبكة']]));}
+   else if(t==='vpn'){o.classList.add('correct');explain(b,'good','الخيار الأكثر أمانًا',`ببيانات الجوّال + VPN تجنّبت خطر الشبكات العامة تمامًا وبقيت بياناتك مشفّرة.<br><br>`+rows([['g','أأمن خيار في الأماكن العامة']]));}
+   else{o.classList.add('wrong');explain(b,'bad','شبكة عامة مفتوحة',`الشبكات المفتوحة غير آمنة ويمكن التنصّت عليها. إن اضطررت فاستخدم VPN دائمًا.<br><br>`+rows([['r','لا تشفير على الشبكة المفتوحة'],['g','الدفاع: VPN + تجنّب إدخال بيانات حسّاسة']]));}});
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='eviltwin').build();markUnlock();
+ }},
+
+/* ---- 11. Password strength / Brute force ---- */
+{id:'passwd',title:'قوة كلمة المرور',sub:'Brute Force — كم تصمد كلمة مرورك؟',color:'#9b6dff',icon:IC.key,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:480px;margin:0 auto"><div style="color:var(--mut);font-size:12px;margin-bottom:8px">🔑 اكتب كلمة مرور وشاهد قوّتها لحظيًا</div>
+   <input class="inp" id="pwIn" placeholder="اكتب كلمة مرور..."><div class="meter" style="margin-top:10px"><i id="pwBar"></i></div>
+   <div style="display:flex;justify-content:space-between;margin-top:6px"><span id="pwLbl" style="font-weight:bold;font-size:13px">—</span><span id="pwTime" class="mono" style="font-size:13px;color:var(--mut)">زمن الكسر: —</span></div>
+   <div id="pwCrack" class="mono" style="margin-top:12px;background:#0a0f18;border:1px solid var(--line);border-radius:10px;padding:12px;min-height:44px;direction:ltr;text-align:left;color:#cfe0f5;font-size:14px"></div></div>`;
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn red" id="crackBtn">ابدأ محاولة الكسر (Brute Force)</button><span style="color:var(--mut);font-size:12px">جرّب «123» ثم جرّب «Kx9$mP2!vه»</span>`;
+  b.appendChild(stage);b.appendChild(controls);
+  const cset=p=>{let s=0;if(/[a-z]/.test(p))s+=26;if(/[A-Z]/.test(p))s+=26;if(/[0-9]/.test(p))s+=10;if(/[^A-Za-z0-9]/.test(p))s+=33;return s||1;};
+  function human(sec){if(sec<1)return'أقل من ثانية';const u=[['قرن',3.15e9],['سنة',3.15e7],['يوم',86400],['ساعة',3600],['دقيقة',60],['ثانية',1]];for(const uu of u){if(sec>=uu[1]){const v=Math.floor(sec/uu[1]);return (v>1e6?'ملايين الـ ':v+' ')+uu[0];}}return'لحظات';}
+  const score=p=>({sec:Math.pow(cset(p),p.length)/1e10});
+  $('#pwIn').oninput=()=>{const p=$('#pwIn').value;if(!p){$('#pwBar').style.width='0%';$('#pwLbl').textContent='—';$('#pwTime').textContent='زمن الكسر: —';return;}
+    const sec=score(p).sec,yrs=sec/3.15e7;let pct,lbl,col;
+    if(p.length<6||yrs<1e-4){pct=18;lbl='ضعيفة جدًا';col='#ff5566';}else if(yrs<1){pct=45;lbl='ضعيفة';col='#ffb02e';}else if(yrs<1000){pct=72;lbl='جيّدة';col='#4a9eff';}else{pct=100;lbl='قويّة جدًا';col='#33d17a';}
+    $('#pwBar').style.width=pct+'%';$('#pwBar').style.background=col;$('#pwLbl').textContent=lbl;$('#pwLbl').style.color=col;$('#pwTime').textContent='زمن الكسر التقديري: '+human(sec);};
+  $('#crackBtn').onclick=()=>{const p=$('#pwIn').value||'123';const sec=score(p).sec,box=$('#pwCrack');const ex=$('.explain',b);if(ex)ex.remove();
+    if(sec<3600){let tries=0;const chars='abcdefghijklmnopqrstuvwxyz0123456789!@#';const iv=setInterval(()=>{box.textContent='المحاولة: '+Array.from(p).map(()=>chars[Math.floor(Math.random()*chars.length)]).join('');
+      if(++tries>14){clearInterval(iv);box.innerHTML='<span style="color:#ff5566">✘ كُسرت: '+p+' — خلال '+human(sec)+'</span>';
+        explain(b,'bad','كلمة مرور ضعيفة سقطت بسرعة',`الكلمات القصيرة/البسيطة تُكسَر بالتجربة الشاملة (Brute Force) في لحظات.<br><br>`+rows([['g','الدفاع: طول 12+ حرفًا، مزيج حروف كبيرة/صغيرة وأرقام ورموز، وفريدة لكل حساب'],['g','استخدم مدير كلمات مرور + المصادقة متعدّدة العوامل (MFA)']]));}},90);addT(iv);}
+    else{box.innerHTML='<span style="color:#33d17a">✓ متينة! تحتاج نحو '+human(sec)+' لكسرها — المهاجم يستسلم.</span>';
+      explain(b,'good','كلمة مرور قويّة',`كلما زاد الطول والتنوّع تضخّم عدد الاحتمالات أضعافًا، فيصبح الكسر بالقوة الغاشمة غير عملي.<br><br>`+rows([['g','الطول + التنوّع + التفرّد = حماية قويّة'],['g','أضِف MFA لأمان مضاعف']]));}};
+  markUnlock();
+ }},
+
+/* ---- 12. Shoulder Surfing ---- */
+{id:'shoulder',title:'التلصّص فوق الكتف',sub:'Shoulder Surfing — عين تراقب إدخالك',color:'#ff5566',icon:IC.eye,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="display:flex;gap:24px;justify-content:center;flex-wrap:wrap;align-items:flex-start">
+   <div style="text-align:center"><div style="color:var(--mut);font-size:12px;margin-bottom:8px">🏧 أدخل رقمك السرّي (PIN)</div>
+     <div id="pinDisp" class="mono" style="font-size:26px;letter-spacing:8px;background:#0a0f18;border:1px solid var(--line);border-radius:10px;padding:10px 0;width:180px;margin:0 auto">____</div>
+     <div id="pad" style="display:grid;grid-template-columns:repeat(3,56px);gap:8px;justify-content:center;margin-top:12px"></div></div>
+   <div style="text-align:center"><div style="color:var(--red);font-size:12px;margin-bottom:8px">👁️ ما يراه المتلصّص خلفك</div>
+     <div style="margin:6px auto;width:46px">${IC.eye('#ff5566')}</div><div id="eyeSees" class="mono" style="font-size:24px;letter-spacing:8px;color:#ff9aa6;margin-top:8px">____</div></div></div>`;
+  const controls=el('div','controls');controls.innerHTML=`<div class="seg"><button class="on" data-c="off">بدون حماية</button><button data-c="on">غطِّ الإدخال (واقي شاشة)</button></div><button class="btn ghost sm" id="rsBtn">↺ مسح</button>`;
+  b.appendChild(stage);b.appendChild(controls);let pin='',cover=false;
+  const pad=$('#pad');for(let i=1;i<=9;i++){const k=el('button','btn sm');k.textContent=i;k.style.cssText='background:#16233d;color:#eaf1fb';k.onclick=()=>press(i);pad.appendChild(k);}
+  const k0=el('button','btn sm');k0.textContent='0';k0.style.cssText='background:#16233d;color:#eaf1fb;grid-column:2';k0.onclick=()=>press(0);pad.appendChild(k0);
+  function press(d){if(pin.length>=4)return;pin+=d;render();}
+  function render(){$('#pinDisp').textContent=pin.padEnd(4,'_').split('').map(c=>c==='_'?'_':'•').join('');
+    $('#eyeSees').textContent=cover?pin.padEnd(4,'_').replace(/[0-9]/g,'•'):pin.padEnd(4,'_');
+    if(pin.length===4&&!$('.explain',b)){ if(cover)explain(b,'good','الحماية نجحت',`لأنك غطّيت الإدخال، رأى المتلصّص رموزًا فقط ولم يعرف رقمك السرّي.<br><br>`+rows([['g','واقي الشاشة/تغطية اليد تُحبِط التلصّص']]));
+      else explain(b,'bad','رآه المتلصّص!',`مجرّد النظر فوق كتفك كشف رقمك السرّي كاملًا — هذا هو <b>Shoulder Surfing</b>، ولا يحتاج أي تقنية.<br><br>`+rows([['r','الإدخال المكشوف يُقرأ بالعين مباشرةً'],['g','الدفاع: غطِّ لوحة الإدخال + واقي شاشة + اختر مكانًا لا يُرى منه']]));}}
+  controls.querySelectorAll('.seg button').forEach(x=>x.onclick=()=>{cover=x.dataset.c==='on';controls.querySelectorAll('.seg button').forEach(y=>y.classList.toggle('on',y===x));pin='';const ex=$('.explain',b);if(ex)ex.remove();render();});
+  $('#rsBtn').onclick=()=>{pin='';const ex=$('.explain',b);if(ex)ex.remove();render();};render();markUnlock();
+ }},
+
+/* ---- 13. DNS Poisoning / Pharming ---- */
+{id:'dns',title:'تسميم DNS و Pharming',sub:'التلاعب بـ«دفتر هاتف الإنترنت»',color:'#4a9eff',icon:IC.dnsic,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  const D=Diagram(stage,'250px');curDiagram=D;
+  D.addNode('you',86,50,IC.user('#33d17a'),'أنت');D.addNode('dns',50,20,IC.dnsic('#4a9eff'),'خادم DNS');
+  D.addNode('bank',14,38,IC.server('#33d17a'),'البنك الحقيقي');D.addNode('fake',14,76,IC.server('#ff5566'),'موقع مزيّف');
+  D.link('you','dns','#4a9eff55',2);D.link('dns','bank','#33d17a55',2);D.link('dns','fake','#ff556655',1.5,'4 4');
+  stage.insertAdjacentHTML('beforeend',`<div style="max-width:380px;margin:6px auto 0"><div style="color:var(--mut);font-size:11px;margin-bottom:4px">📖 جدول DNS (الاسم ← العنوان)</div><div id="dnsTbl" class="mono" style="background:#0a0f18;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12.5px;direction:ltr;text-align:left"></div><div id="dnsStatus" style="text-align:center;margin-top:8px;font-weight:bold;min-height:20px"></div></div>`);
+  const controls=el('div','controls');const seg=el('div','seg');seg.innerHTML=`<button class="on" data-m="clean">DNS سليم</button><button data-m="poison">DNS مسموم</button>`;
+  controls.appendChild(seg);controls.insertAdjacentHTML('beforeend',`<span class="mono" style="color:var(--mut);font-size:13px">🔗 apollo-bank.com</span><button class="btn" id="openBtn">افتح الموقع</button>`);
+  b.appendChild(stage);b.appendChild(controls);let mode='clean';
+  function tbl(){$('#dnsTbl').innerHTML=`apollo-bank.com → <span style="color:${mode==='clean'?'#33d17a':'#ff5566'};font-weight:bold">${mode==='clean'?'93.184.10.7 (الحقيقي)':'6.6.6.6 (خادم المهاجم)'}</span>`;}
+  function setMode(m){mode=m;[...seg.children].forEach(x=>x.classList.toggle('on',x.dataset.m===m));tbl();$('#dnsStatus').textContent='';stage.style.boxShadow='';const ex=$('.explain',b);if(ex)ex.remove();}
+  seg.querySelectorAll('button').forEach(x=>x.onclick=()=>setMode(x.dataset.m));
+  $('#openBtn').onclick=()=>{$('#openBtn').disabled=true;const col=mode==='clean'?'#33d17a':'#ff5566';
+   D.packet('you','dns',{color:'#4a9eff',dur:600,onDone:function(){
+     D.packet('dns','you',{color:col,dur:600,onDone:function(){
+       const dest=mode==='clean'?'bank':'fake';
+       D.packet('you',dest,{color:col,dur:800,onDone:function(){$('#openBtn').disabled=false;
+         if(mode==='clean'){$('#dnsStatus').innerHTML='<span style="color:var(--green)">✓ وصلت إلى البنك الحقيقي — آمن</span>';
+           explain(b,'good','DNS سليم — وصلت للموقع الصحيح',`ترجم DNS الاسم إلى عنوان البنك الحقيقي فوصلت بأمان.<br><br>`+rows([['g','تحقّق دائمًا من HTTPS والقفل بجانب العنوان']]));}
+         else{stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';$('#dnsStatus').innerHTML='<span style="color:var(--red)">✘ موقع مزيّف يطابق بنكك — بياناتك تُسرق!</span>';
+           explain(b,'bad','Pharming — أُعيد توجيهك رغم كتابتك العنوان الصحيح',`سمّم المهاجم <b>DNS</b> فترجم اسم بنكك إلى عنوان خادمه المزيّف. كتبت العنوان الصحيح لكنك وصلت لموقع مطابق يسرق بياناتك.<br><br>`+rows([['r','التلاعب بترجمة DNS يخدع حتى العنوان الصحيح'],['g','الدفاع: تحقّق من شهادة HTTPS + استخدم DNS موثوقًا/DNSSEC + احذر تحذيرات الشهادة']]));}
+       }});
+     }});
+   }});
+  };
+  setMode('clean');markUnlock();
+ }},
+
+/* ---- 14. ARP Spoofing ---- */
+{id:'arp',title:'انتحال ARP',sub:'Spoofing — المهاجم يتنكّر كبوّابة الشبكة',color:'#ff5566',icon:IC.spoof,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');const D=Diagram(stage,'250px');curDiagram=D;
+  D.addNode('vic',85,45,IC.pc('#33d17a'),'جهازك');D.addNode('gw',15,45,IC.server('#29d0b8'),'البوّابة/الإنترنت');D.addNode('atk',50,86,IC.attacker(),'المهاجم');
+  D.link('vic','gw','#33d17a55',2);
+  stage.insertAdjacentHTML('beforeend',`<div style="max-width:400px;margin:6px auto 0"><div style="color:var(--mut);font-size:11px;margin-bottom:4px">جدول ARP لديك (IP البوّابة ← MAC):</div><div id="arpTbl" class="mono" style="background:#0a0f18;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:12.5px;direction:ltr;text-align:left">192.168.1.1 → AA:BB:CC (الحقيقية)</div><div id="arpStatus" style="text-align:center;margin-top:8px;font-weight:bold;min-height:20px"></div></div>`);
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn" id="normBtn">أرسل بيانات (طبيعي)</button><button class="btn red" id="spoofBtn">احقن ARP مزيّف ثم أرسل</button><button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;
+  b.appendChild(stage);b.appendChild(controls);
+  $('#normBtn').onclick=()=>D.packet('vic','gw',{color:'#33d17a',dur:800,onDone:function(){$('#arpStatus').innerHTML='<span style="color:var(--green)">✓ بياناتك ذهبت مباشرةً للبوّابة</span>';}});
+  $('#spoofBtn').onclick=()=>{
+   D.packet('atk','vic',{color:'#ff5566',dur:600,onDone:function(){
+     $('#arpTbl').innerHTML='192.168.1.1 → <span style="color:#ff5566;font-weight:bold">66:66:66 (MAC المهاجم!)</span>';
+     D.packet('vic','atk',{color:'#ff5566',dur:600,onDone:function(){
+       D.packet('atk','gw',{color:'#ff5566',dur:600,onDone:function(){
+         stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';$('#arpStatus').innerHTML='<span style="color:var(--red)">✘ بياناتك تمرّ عبر المهاجم قبل البوّابة!</span>';
+         explain(b,'bad','ARP Spoofing — انتحل هوية البوّابة',`أرسل المهاجم رسائل <b>ARP</b> مزيّفة تدّعي أنه البوّابة، فحدّث جهازك جدوله ليربط عنوان البوّابة بـ MAC المهاجم. الآن كل بياناتك تمرّ <b>عبره</b> (شكل من MITM داخل الشبكة).<br><br>`+rows([['r','انتحال العنوان يعيد توجيه الحركة سرًّا'],['g','الدفاع: Dynamic ARP Inspection + تجزئة الشبكة + التشفير (HTTPS/VPN)']]));
+       }});
+     }});
+   }});
+  };
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='arp').build();markUnlock();
+ }},
+
+/* ---- 15. Rootkit ---- */
+{id:'rootkit',title:'الجذور الخفية (Rootkit)',sub:'برمجية تُخفي نفسها عن الفحص العادي',color:'#9b6dff',icon:IC.ghost,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  const procs=[{n:'explorer.exe',s:'نظام'},{n:'chrome.exe',s:'متصفّح'},{n:'antivirus.exe',s:'حماية'},{n:'word.exe',s:'تطبيق'}];
+  stage.innerHTML=`<div style="max-width:470px;margin:0 auto"><div style="color:var(--mut);font-size:12px;margin-bottom:8px">🖥️ مدير المهام — العمليات الجارية</div><div id="procList"></div>
+   <div id="scanBar" class="meter" style="margin-top:12px;display:none"><i style="background:linear-gradient(90deg,#4a9eff,#29d0b8)"></i></div><div id="scanTxt" style="text-align:center;margin-top:8px;font-weight:bold;min-height:20px"></div></div>`;
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn" id="normScan">فحص عادي</button><button class="btn red" id="deepScan">فحص عميق (Rootkit scan)</button><button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;
+  b.appendChild(stage);b.appendChild(controls);
+  const row=p=>`<div style="display:flex;justify-content:space-between;background:${p.h?'rgba(255,85,102,.12)':'#0e1728'};border:1px solid ${p.h?'var(--red)':'var(--line)'};border-radius:9px;padding:10px 12px;margin-bottom:6px"><span class="mono" style="${p.h?'color:#ff9aa6':''}">${p.n}</span><span style="color:var(--mut);font-size:12px">${p.s}</span></div>`;
+  const renderList=h=>{$('#procList').innerHTML=procs.map(row).join('')+(h?row({n:'svch0st.exe',s:'⚠ Rootkit مخفي',h:1}):'');};renderList(false);
+  function scan(deep){$('#scanBar').style.display='';const bar=$('#scanBar').firstElementChild;bar.style.transition='none';bar.style.width='0%';$('#scanTxt').textContent='جارٍ الفحص...';const ex=$('.explain',b);if(ex)ex.remove();
+    addT(setTimeout(()=>{bar.style.transition='width 1.1s linear';bar.style.width='100%';},30));
+    addT(setTimeout(()=>{if(deep){renderList(true);$('#scanTxt').innerHTML='<span style="color:var(--red)">✘ اكتُشف Rootkit مخفي: svch0st.exe</span>';stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.18)';
+        explain(b,'bad','Rootkit — كان مختبئًا في العمق',`الـ <b>Rootkit</b> يعمل في أعمق مستويات النظام ويُخفي نفسه عن الأدوات العادية، لذا مرّ الفحص العادي «نظيفًا» زورًا. الفحص العميق/دون اتصال كشفه.<br><br>`+rows([['r','يمنح المهاجم أعلى صلاحية ويخفي وجوده'],['g','الدفاع: فحص عميق/offline + مراقبة السلامة + أحيانًا إعادة تثبيت النظام بالكامل']]));}
+      else{$('#scanTxt').innerHTML='<span style="color:var(--amber)">✓ لم يُعثر على تهديد… (لكن هل هذا صحيح؟)</span>';}},1250));}
+  $('#normScan').onclick=()=>scan(false);$('#deepScan').onclick=()=>scan(true);$('#rsBtn').onclick=()=>LABS.find(l=>l.id==='rootkit').build();markUnlock();
+ }},
+
+/* ---- 16. Botnet lifecycle -> DDoS ---- */
+{id:'botnet',title:'بناء Botnet ثم DDoS',sub:'من إصابة الأجهزة إلى إغراق الخادم',color:'#ff5566',icon:IC.botnet,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');const D=Diagram(stage,'300px');curDiagram=D;
+  D.addNode('srv',50,50,IC.server('#29d0b8'),'الخادم الهدف');
+  const around=[[12,18],[30,12],[50,10],[70,12],[88,18],[92,44],[88,72],[70,86],[50,90],[30,86],[12,72],[8,44]];const bots=[];
+  around.forEach((p,i)=>bots.push(D.addNode('b'+i,p[0],p[1],IC.pc('#4a9eff'),'')));
+  stage.insertAdjacentHTML('beforeend',`<div style="max-width:320px;margin:6px auto 0"><div class="mono" style="display:flex;justify-content:space-between;font-size:12px;color:var(--mut)"><span>حِمل الخادم</span><span id="bl">0%</span></div><div class="meter"><i id="blBar"></i></div><div id="bcnt" class="mono" style="text-align:center;color:var(--mut);font-size:12px;margin-top:6px">Zombies: 0 / 12</div></div>`);
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn red" id="buildBtn">1) أصِب الأجهزة (بناء Botnet)</button><button class="btn" id="fireBtn" disabled>2) أطلق هجوم DDoS</button><button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;
+  b.appendChild(stage);b.appendChild(controls);let infected=0,load=0;
+  function setBot(i,on){const box=D.nodes['b'+i].dom.querySelector('.box');box.innerHTML=IC.pc(on?'#ff5566':'#4a9eff');box.classList.toggle('pulse',on);}
+  function reset(){infected=0;load=0;bots.forEach((_,i)=>setBot(i,false));$('#bcnt').textContent='Zombies: 0 / 12';$('#blBar').style.width='0%';$('#bl').textContent='0%';$('#fireBtn').disabled=true;$('#buildBtn').disabled=false;$('#buildBtn').textContent='1) أصِب الأجهزة (بناء Botnet)';stage.style.boxShadow='';D.nodes.srv.dom.querySelector('.box').classList.remove('shake');const ex=$('.explain',b);if(ex)ex.remove();}
+  $('#buildBtn').onclick=()=>{$('#buildBtn').disabled=true;let i=0;const iv=setInterval(()=>{if(i>=bots.length){clearInterval(iv);$('#fireBtn').disabled=false;$('#buildBtn').textContent='✓ اكتمل بناء Botnet';return;}D.packet('srv','b'+i,{color:'#9b6dff',dur:400,size:7});setBot(i,true);infected++;$('#bcnt').textContent='Zombies: '+infected+' / 12';i++;},260);addT(iv);};
+  $('#fireBtn').onclick=()=>{$('#fireBtn').disabled=true;const iv=setInterval(()=>{bots.forEach((_,i)=>D.packet('b'+i,'srv',{color:'#ff5566',dur:600}));load=Math.min(100,load+13);$('#blBar').style.width=load+'%';$('#bl').textContent=Math.round(load)+'%';$('#blBar').style.background=load>85?'linear-gradient(90deg,#ff3b52,#ff7a88)':'linear-gradient(90deg,#ffb02e,#ffd76b)';
+     if(load>=100){clearInterval(iv);D.nodes.srv.dom.querySelector('.box').classList.add('shake');stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.25)';
+       explain(b,'bad','Botnet + DDoS — الخادم سقط',`أولًا بنى المهاجم شبكة <b>Botnet</b> بإصابة أجهزة كثيرة (قد يكون جهازك أحدها دون أن تدري!)، ثم أمرها جميعًا بإغراق الخادم في آنٍ واحد فانهار (<b>DDoS</b>).<br><br>`+rows([['r','جيش موزّع يصعب صدّه'],['g','الدفاع: حدّث أجهزتك حتى لا تصبح Zombie + خدمات مكافحة DDoS + توزيع الحِمل']]));}},480);addT(iv);};
+  reset();markUnlock();
+ }},
+
+/* ---- 17. Firewall / Defense in Depth (live packet stream) ---- */
+{id:'firewall',title:'الدفاع في العمق',sub:'طبقات الحماية تصدّ الهجوم — Firewall و IDS و Antivirus',color:'#33d17a',icon:IC.firewall,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');stage.innerHTML=`<div class="diagram" id="fwDia" style="height:280px"></div>`;b.appendChild(stage);const dia=$('#fwDia',stage);
+  const walls=[{x:32,on:true,name:'Firewall',c:'#4a9eff'},{x:50,on:true,name:'IDS/IPS',c:'#9b6dff'},{x:68,on:true,name:'Antivirus',c:'#ffb02e'}];
+  dia.insertAdjacentHTML('beforeend',`<div class="node" style="left:8%;top:50%">${IC.globe('#ff5566')}<div class="lbl">الإنترنت</div></div><div class="node" style="left:92%;top:50%">${IC.server('#29d0b8')}<div class="lbl">خادمك</div></div>`);
+  walls.forEach((w,i)=>dia.insertAdjacentHTML('beforeend',`<div id="wall${i}" style="position:absolute;left:${w.x}%;top:12%;height:76%;width:6px;border-radius:4px;background:${w.c};box-shadow:0 0 12px ${w.c};transform:translateX(-50%);transition:.2s;z-index:2"></div><div style="position:absolute;left:${w.x}%;top:1%;transform:translateX(-50%);font-size:10.5px;color:${w.c};font-weight:bold" class="mono">${w.name}</div>`));
+  const controls=el('div','controls');controls.innerHTML=walls.map((w,i)=>`<button class="btn sm" data-w="${i}" style="background:${w.c};color:#04101f">${w.name}: مُفعّل</button>`).join('')+`<span style="color:var(--mut);font-size:12px">🟢 شرعي يمرّ · 🔴 خبيث يُحجب</span>`;
+  b.appendChild(controls);
+  b.insertAdjacentHTML('beforeend',`<div class="readout"><div class="ro"><div class="l">هجمات مُحجَّبة</div><div class="v" id="cBlk" style="color:var(--green)">0</div></div><div class="ro"><div class="l">هجمات وصلت خادمك</div><div class="v" id="cThr" style="color:var(--red)">0</div></div></div>`);
+  let blocked=0,thru=0;
+  controls.querySelectorAll('button[data-w]').forEach(btn=>btn.onclick=()=>{const i=+btn.dataset.w;walls[i].on=!walls[i].on;btn.textContent=walls[i].name+(walls[i].on?': مُفعّل':': مُعطّل');btn.style.opacity=walls[i].on?'1':'.4';$('#wall'+i).style.opacity=walls[i].on?'1':'.12';});
+  const spawn=setInterval(()=>{const bad=Math.random()<0.5;const p=el('div','fpk');p.style.cssText=`position:absolute;top:${28+Math.random()*44}%;left:8%;width:11px;height:11px;border-radius:50%;background:${bad?'#ff5566':'#33d17a'};box-shadow:0 0 8px ${bad?'#ff5566':'#33d17a'};transform:translate(-50%,-50%);z-index:3`;p.dataset.bad=bad?'1':'0';p.dataset.x='8';dia.appendChild(p);},650);addT(spawn);
+  const move=setInterval(()=>{dia.querySelectorAll('.fpk').forEach(p=>{if(p.dataset.x==='')return;const prev=parseFloat(p.dataset.x),x=prev+2.4,bad=p.dataset.bad==='1';
+    if(bad){for(let i=0;i<walls.length;i++){const wx=walls[i].x;if(walls[i].on&&prev<wx&&x>=wx){p.style.transition='.15s';p.style.left=wx+'%';p.style.background='#ffb02e';p.style.transform='translate(-50%,-50%) scale(1.8)';p.style.opacity='0';const e2=p;setTimeout(()=>e2.remove(),170);p.dataset.x='';blocked++;$('#cBlk').textContent=blocked;return;}}}
+    if(p.dataset.x==='')return;
+    if(x>=92){if(bad){thru++;$('#cThr').textContent=thru;stage.style.boxShadow='inset 0 0 40px rgba(255,85,102,.18)';setTimeout(()=>stage.style.boxShadow='',260);}p.remove();return;}
+    p.dataset.x=x;p.style.left=x+'%';});},55);addT(move);
+  explain(b,'info','جرّب: أطفئ الطبقات وشاهد الفرق',`الحزم الحمراء = هجمات، والخضراء = حركة شرعية. مع تفعيل الطبقات (<b>Firewall</b> ثم <b>IDS/IPS</b> ثم <b>Antivirus</b>) تُحجب الهجمات وتمرّ الحركة الشرعية. أطفئ الطبقات لترى الهجمات تصل خادمك.<br><br>`+rows([['g','هذا مبدأ الدفاع في العمق (Defense in Depth): طبقات متراكبة، إذا فشلت واحدة تصدّ الأخرى'],['r','بلا طبقات، كل هجوم يصل مباشرةً']]));
+  markUnlock();
+ }},
+
+/* ---- 18. Zero-Day race ---- */
+{id:'zeroday',title:'ثغرة يوم الصفر',sub:'Zero-Day — سباق بين المهاجم والمورّد',color:'#ffb02e',icon:IC.clock,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:540px;margin:0 auto"><div style="text-align:center;color:var(--mut);font-size:12px;margin-bottom:12px">⏱️ اكتُشفت ثغرة غير معروفة… من يسبق؟</div>
+   <div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span style="color:var(--red);font-weight:bold">🗡️ استغلال المهاجم</span><span id="aPct" class="mono" style="color:var(--red)">0%</span></div><div class="meter"><i id="aBar" style="background:linear-gradient(90deg,#ff3b52,#ff7a88)"></i></div></div>
+   <div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px"><span style="color:var(--green);font-weight:bold">🛡️ تصحيح المورّد (Patch)</span><span id="pPct" class="mono" style="color:var(--green)">0%</span></div><div class="meter"><i id="pBar" style="background:linear-gradient(90deg,#33d17a,#29d0b8)"></i></div></div>
+   <div id="zdStatus" style="text-align:center;margin-top:18px;font-weight:bold;font-size:15px;min-height:22px"></div></div>`;
+  const controls=el('div','controls');const seg=el('div','seg');seg.innerHTML=`<button class="on" data-m="slow">تحديث يدوي (بطيء)</button><button data-m="fast">تحديث تلقائي (سريع)</button>`;
+  controls.appendChild(seg);controls.insertAdjacentHTML('beforeend',`<button class="btn red" id="runBtn">شغّل السيناريو</button>`);
+  b.appendChild(stage);b.appendChild(controls);let mode='slow';
+  seg.querySelectorAll('button').forEach(x=>x.onclick=()=>{mode=x.dataset.m;[...seg.children].forEach(y=>y.classList.toggle('on',y===x));});
+  function done(exp){$('#runBtn').disabled=false;const ex=$('.explain',b);if(ex)ex.remove();
+    if(exp){$('#zdStatus').innerHTML='<span style="color:var(--red)">✘ استُغلّت الثغرة قبل صدور التصحيح — Zero-Day!</span>';stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';
+      explain(b,'bad','Zero-Day — لا تصحيح بعد',`استغلّ المهاجم الثغرة قبل أن يعرفها المورّد أو يصدر لها تصحيحًا (Patch)، فبقيت الأنظمة مكشوفة في «نافذة التعرّض».<br><br>`+rows([['r','لا يوجد تحديث يحمي منها بعد'],['g','الدفاع: دفاع طبقي + رصد السلوك الشاذ (لا الاعتماد على توقيع معروف) + تسريع التحديثات']]));}
+    else{$('#zdStatus').innerHTML='<span style="color:var(--green)">✓ صدر التصحيح قبل الاستغلال — محمي</span>';stage.style.boxShadow='';
+      explain(b,'good','التحديث السريع أغلق الثغرة',`لأن التحديث التلقائي كان سريعًا، صدر التصحيح قبل أن يُكمل المهاجم استغلاله فأُغلقت النافذة.<br><br>`+rows([['g','التحديث التلقائي السريع يقلّص «نافذة الخطر»'],['g','فعّل التحديثات التلقائية دائمًا']]));}}
+  $('#runBtn').onclick=()=>{$('#runBtn').disabled=true;$('#zdStatus').textContent='';stage.style.boxShadow='';let a=0,p=0;const pr=mode==='fast'?2.7:1.05;
+    const iv=setInterval(()=>{a=Math.min(100,a+1.7);p=Math.min(100,p+pr);$('#aBar').style.width=a+'%';$('#pBar').style.width=p+'%';$('#aPct').textContent=Math.round(a)+'%';$('#pPct').textContent=Math.round(p)+'%';
+      if(a>=100){clearInterval(iv);done(true);}else if(p>=100){clearInterval(iv);done(false);}},55);addT(iv);};
+  markUnlock();
+ }},
+
+/* ---- 19. CIA Triad ---- */
+{id:'triad',title:'مثلث أمن المعلومات',sub:'CIA — السرّية والسلامة والتوافر: ما الذي يكسره كل هجوم؟',color:'#29d0b8',icon:IC.triad,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  const pil=(id,name,en,col,desc)=>`<div class="cia" id="${id}" style="flex:1;min-width:150px;background:#0e1728;border:1px solid ${col};border-radius:14px;padding:14px;text-align:center;transition:.35s;position:relative;overflow:hidden">
+     <div style="width:40px;height:40px;margin:0 auto 8px">${IC.shield(col,40)}</div>
+     <div style="font-weight:bold;font-size:15px;color:${col}">${name}</div>
+     <div class="mono" style="font-size:11px;color:var(--mut);margin-top:2px">${en}</div>
+     <div style="font-size:11.5px;color:var(--mut);line-height:1.7;margin-top:8px">${desc}</div>
+     <div class="crk" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,85,102,.14);opacity:0;transition:.35s;font-weight:bold;color:var(--red)">✘ اختُرقت</div></div>`;
+  stage.innerHTML=`<div style="text-align:center;color:var(--mut);font-size:12.5px;margin-bottom:14px">🎯 أمن أي نظام يقوم على ثلاث ركائز — اختر هجومًا وشاهد أيّ ركيزة يكسرها</div>
+   <div style="display:flex;gap:12px;flex-wrap:wrap;max-width:640px;margin:0 auto">
+     ${pil('cC','السرّية','Confidentiality',getComputedStyle(document.documentElement).getPropertyValue('--blue').trim()||'#4a9eff','لا يطّلع على البيانات إلا المصرَّح لهم')}
+     ${pil('cI','السلامة','Integrity','#ffb02e','لا تُعدَّل البيانات إلا بصورة مشروعة')}
+     ${pil('cA','التوافر','Availability','#33d17a','الخدمة متاحة للمستخدمين عند الحاجة')}</div>`;
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn red sm" data-a="C">تسريب/تجسّس على البيانات</button><button class="btn red sm" data-a="I">تعديل أو تزوير البيانات</button><button class="btn red sm" data-a="A">هجوم DDoS يُسقط الخدمة</button><button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;
+  b.appendChild(stage);b.appendChild(controls);
+  const map={C:['cC','السرّية (Confidentiality)','سرقة البيانات أو التنصّت عليها يكشفها لغير المصرَّح لهم، فتنهار <b>السرّية</b>.',[['r','مثال: تسريب قاعدة عملاء، التنصّت على شبكة مفتوحة'],['g','الدفاع: التشفير + التحكّم في الوصول + كلمات مرور قويّة']]],
+    I:['cI','السلامة (Integrity)','تعديل البيانات دون إذن — كتغيير رصيد أو تزوير سجلّ — يكسر <b>السلامة</b> فلا يعود يُوثَق بها.',[['r','مثال: تحوير رسالة أثناء نقلها، العبث بسجلّات النظام'],['g','الدفاع: التوقيع الرقمي + قيم التحقّق (Hash) + سجلّات لا تقبل التعديل']]],
+    A:['cA','التوافر (Availability)','إغراق الخادم بـ DDoS يمنع المستخدمين الشرعيّين من الوصول، فيسقط <b>التوافر</b>.',[['r','مثال: DDoS، حذف البيانات، تعطّل الأجهزة'],['g','الدفاع: نسخ احتياطي + توزيع الأحمال + خطط استمرارية العمل']]]};
+  controls.querySelectorAll('button[data-a]').forEach(x=>x.onclick=()=>{const m=map[x.dataset.a];
+    ['cC','cI','cA'].forEach(id=>{$('#'+id).querySelector('.crk').style.opacity='0';$('#'+id).style.boxShadow='';});
+    const t=$('#'+m[0]);t.querySelector('.crk').style.opacity='1';t.style.boxShadow='inset 0 0 40px rgba(255,85,102,.25)';
+    const ex=$('.explain',b);if(ex)ex.remove();explain(b,'bad','الهجوم كسر ركيزة: '+m[1],m[2]+'<br><br>'+rows(m[3])+'<div style="margin-top:8px;color:var(--teal);font-size:13px">💡 كل هجوم في هذا المختبر يمكن ربطه بالركيزة التي يستهدفها.</div>');});
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='triad').build();markUnlock();
+ }},
+
+/* ---- 20. MFA ---- */
+{id:'mfa',title:'المصادقة متعدّدة العوامل',sub:'MFA — لماذا لا تكفي كلمة المرور وحدها؟',color:'#33d17a',icon:()=>IC.mobile('#33d17a',46),
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');b.appendChild(stage);
+  const D=Diagram(stage,'280px');curDiagram=D;
+  D.addNode('att',16,50,IC.attacker('#ff5566'),'المهاجم (يملك كلمة مرورك)');
+  D.addNode('srv',52,50,IC.server('#4a9eff'),'خادم الدخول');
+  D.addNode('phone',86,50,IC.mobile('#33d17a',40),'جوّالك (العامل الثاني)');
+  D.link('att','srv','#243450',2,'6 4');D.link('srv','phone','#243450',2,'6 4');
+  const controls=el('div','controls');const seg=el('div','seg');seg.innerHTML=`<button data-m="off" class="on">MFA مُعطّلة</button><button data-m="on">MFA مُفعّلة</button>`;
+  controls.appendChild(seg);controls.insertAdjacentHTML('beforeend',`<button class="btn red" id="tryBtn">حاول المهاجم الدخول ▶</button>`);
+  const ro=el('div','readout');ro.innerHTML=`<div class="ro"><div class="l">كلمة المرور</div><div class="v" style="color:var(--red)">مسرّبة ✘</div></div><div class="ro"><div class="l">العامل الثاني (OTP)</div><div class="v" id="mfaState">—</div></div><div class="ro"><div class="l">النتيجة</div><div class="v" id="mfaRes">بانتظار المحاولة</div></div>`;
+  b.appendChild(controls);b.appendChild(ro);let mode='off';
+  seg.querySelectorAll('button').forEach(x=>x.onclick=()=>{mode=x.dataset.m;[...seg.children].forEach(y=>y.classList.toggle('on',y===x));$('#mfaState').textContent='—';$('#mfaRes').textContent='بانتظار المحاولة';$('#mfaRes').style.color='';stage.style.boxShadow='';const ex=$('.explain',b);if(ex)ex.remove();});
+  $('#tryBtn').onclick=()=>{$('#tryBtn').disabled=true;const ex=$('.explain',b);if(ex)ex.remove();
+    D.packet('att','srv',{color:'#ff5566',dur:700,onDone:function(){
+      if(mode==='off'){$('#mfaState').textContent='غير مطلوب';$('#mfaRes').textContent='دخل الحساب ✘';$('#mfaRes').style.color='var(--red)';stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';$('#tryBtn').disabled=false;
+        explain(b,'bad','كلمة المرور وحدها لا تكفي',`بما أن المهاجم يملك كلمة مرورك (من تصيّد أو تسريب)، وليس هناك عامل ثانٍ، دخل حسابك مباشرةً.<br><br>`+rows([['r','عامل واحد = نقطة فشل واحدة'],['g','فعّل MFA على البريد والبنك وكل حساب مهم']]));}
+      else{$('#mfaState').innerHTML='<span style="color:var(--amber)">مطلوب رمز…</span>';
+        D.packet('srv','phone',{color:'#4a9eff',dur:700,onDone:function(){addT(setTimeout(function(){
+          $('#mfaState').innerHTML='<span style="color:var(--green)">الرمز على جوّالك أنت</span>';$('#mfaRes').textContent='رُفض الدخول ✓';$('#mfaRes').style.color='var(--green)';$('#tryBtn').disabled=false;
+          explain(b,'good','العامل الثاني أوقف المهاجم',`رغم امتلاكه كلمة المرور، طلب الخادم رمزًا لمرّة واحدة (OTP) أُرسِل إلى <b>جوّالك أنت</b> — والمهاجم لا يملكه، فأُغلق الباب.<br><br>`+rows([['g','MFA = شيء تعرفه (كلمة مرور) + شيء تملكه (جوّالك)'],['g','يوقف أغلب هجمات سرقة كلمات المرور']]));},700));}});}}});};
+  markUnlock();
+ }},
+
+/* ---- 21. Vishing / Social Engineering ---- */
+{id:'vishing',title:'الهندسة الاجتماعية',sub:'Vishing — مكالمة «الدعم الفنّي» المزيّفة تطلب رمزك',color:'#4a9eff',icon:IC.phone,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:500px;margin:0 auto">
+   <div style="display:flex;align-items:center;gap:12px;background:#0e1728;border:1px solid var(--line);border-radius:12px;padding:12px">
+     <div class="pulse" style="width:40px">${IC.phone('#4a9eff',40)}</div>
+     <div><div style="font-weight:bold">📞 مكالمة واردة: «قسم أمن البنك»</div><div style="font-size:12px;color:var(--mut)">رقم يبدو رسميًّا</div></div></div>
+   <div id="chat" style="margin-top:12px;display:flex;flex-direction:column;gap:8px"></div>
+   <div id="vChoice"></div></div>`;
+  b.appendChild(stage);
+  const bubble=(who,txt,col)=>`<div style="align-self:${who==='them'?'flex-start':'flex-end'};max-width:82%;background:${who==='them'?'#132038':'rgba(41,208,184,.15)'};border:1px solid ${col};border-radius:12px;padding:9px 12px;font-size:13px;line-height:1.7">${txt}</div>`;
+  const chat=$('#chat');const lines=[
+    ['them','مرحبًا، معك قسم الأمن. رصدنا محاولة دخول مشبوهة على حسابك الآن.','var(--line)'],
+    ['them','لإيقافها فورًا، سنرسل لك رمز تحقّق (OTP) — اقرأه لي حالًا لنؤكّد هويتك.','var(--amber)']];
+  let i=0;(function play(){if(i<lines.length){chat.insertAdjacentHTML('beforeend',bubble(lines[i][0],lines[i][1],lines[i][2]));i++;addT(setTimeout(play,900));}
+    else{$('#vChoice').innerHTML=`<div style="margin-top:6px;color:var(--mut);font-size:12px">وصلك الآن رمز على جوّالك. ماذا تفعل؟</div>
+      <div class="opt" data-c="give" style="margin-top:8px">📢 أقرأ له الرمز لأنه «قسم الأمن»</div>
+      <div class="opt" data-c="refuse" style="border-color:var(--teal)">🛑 أرفض وأُغلق، ثم أتّصل بالبنك من الرقم الرسمي</div>`;
+      $('#vChoice').querySelectorAll('.opt').forEach(o=>o.onclick=()=>{$('#vChoice').querySelectorAll('.opt').forEach(x=>x.style.pointerEvents='none');
+        if(o.dataset.c==='give'){o.classList.add('wrong');stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';
+          chat.insertAdjacentHTML('beforeend',bubble('them','ممتاز… شكرًا لك. <span style="color:var(--red)">(دخل الحساب وحوّل الأموال)</span>','var(--red)'));
+          explain(b,'bad','سقطت في فخّ الهندسة الاجتماعية',`لا توجد جهة شرعية تطلب رمز الـ OTP هاتفيًّا أبدًا. المهاجم خلق <b>شعورًا بالطوارئ</b> ليدفعك للتصرّف بسرعة دون تفكير — هذه هي <b>الهندسة الاجتماعية</b> (تستهدف الإنسان لا الجهاز).<br><br>`+rows([['r','الاستعجال والسلطة المزعومة أدوات ضغط نفسي'],['g','الدفاع: لا تُعطِ رمزًا/كلمة مرور هاتفيًّا، أغلِق واتّصل بالرقم الرسمي بنفسك']]));}
+        else{o.classList.add('correct');chat.insertAdjacentHTML('beforeend',bubble('me','لا أُشارك أي رمز. سأتّصل بالبنك بنفسي.','var(--teal)'));
+          explain(b,'good','تصرّف سليم — لم تنخدع',`أدركت أن الجهات الرسمية لا تطلب رموز التحقّق، وتحقّقت عبر <b>قناة رسمية</b> بنفسك بدل الوثوق بالمتّصل.<br><br>`+rows([['g','تحقّق دائمًا عبر قناة تعرفها أنت'],['g','الاستعجال إشارة إنذار، لا سبب للتسرّع']]));}});}
+  })();
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;b.appendChild(controls);
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='vishing').build();markUnlock();
+ }},
+
+/* ---- 22. USB Baiting ---- */
+{id:'usbbait',title:'فخّ الـ USB المهجور',sub:'Baiting — إصبع USB «مجّاني» يصيب شبكتك كاملة',color:'#ffb02e',icon:IC.usb,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');b.appendChild(stage);
+  const D=Diagram(stage,'300px');curDiagram=D;
+  D.addNode('usb',15,50,IC.usb('#ffb02e'),'USB وُجد في الموقف');
+  D.addNode('me',42,50,IC.pc('#4a9eff'),'جهازك');
+  D.addNode('p1',75,20,IC.pc('#8ea3c4'),'زميل');
+  D.addNode('p2',88,50,IC.server('#8ea3c4'),'خادم الشركة');
+  D.addNode('p3',75,80,IC.pc('#8ea3c4'),'زميل');
+  D.link('me','p1');D.link('me','p2');D.link('me','p3');
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn red" id="plugBtn">وصّل الـ USB لجهازك ▶</button><button class="btn" id="itBtn">سلّمه لقسم تقنية المعلومات 🛡</button><button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;
+  b.appendChild(controls);
+  $('#plugBtn').onclick=()=>{$('#plugBtn').disabled=true;$('#itBtn').disabled=true;
+    D.packet('usb','me',{color:'#ff5566',dur:700,onDone:function(){$('#me')&&0;stage.style.boxShadow='inset 0 0 40px rgba(255,85,102,.18)';
+      ['p1','p2','p3'].forEach((t,k)=>addT(setTimeout(function(){D.packet('me',t,{color:'#ff5566',dur:650});},300+k*350)));
+      addT(setTimeout(function(){
+        explain(b,'bad','إصبع واحد أسقط الشبكة كلّها',`الـ USB المهجور طُعم متعمّد (<b>Baiting</b>). بمجرّد توصيله شغّل برمجية خبيثة على جهازك، ثم انتشرت للأجهزة والخوادم المتّصلة. الفضول كان هو الثغرة.<br><br>`+rows([['r','قد يحمل برمجية تعمل تلقائيًّا (Autorun) أو يتنكّر كلوحة مفاتيح'],['g','الدفاع: لا توصّل وسائط مجهولة أبدًا + سلّمها لتقنية المعلومات + تعطيل Autorun']]));},1500));}});};
+  $('#itBtn').onclick=()=>{$('#plugBtn').disabled=true;$('#itBtn').disabled=true;$('#usb').style.opacity='.4';
+    explain(b,'good','قرار سليم — لم تلمس الطُّعم',`لم تصل الوسيط المجهول بجهازك، بل سلّمته للمختصّين لفحصه في بيئة معزولة. بذلك حرمت المهاجم من نقطة الدخول.<br><br>`+rows([['g','عامِل كل وسيط مجهول كأنه خطر'],['g','الإبلاغ يحمي الشبكة كلّها لا جهازك فقط']]));};
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='usbbait').build();markUnlock();
+ }},
+
+/* ---- 23. Backup 3-2-1 ---- */
+{id:'backup',title:'النسخ الاحتياطي ينقذك',sub:'Backup — الفارق بين الكارثة والتعافي أمام الفدية',color:'#29d0b8',icon:IC.cloud,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  let g='';for(let i=0;i<10;i++)g+=`<div class="file" id="bf${i}">${IC.file('#8ea3c4')}<div class="lockov">${IC.lock('#ff5566',18)}</div></div>`;
+  stage.innerHTML=`<div style="text-align:center;color:var(--mut);font-size:12.5px;margin-bottom:10px">💾 ملفات عملك — ثم تضربها برامج الفدية</div><div class="files">${g}</div>
+    <div id="bkStatus" style="text-align:center;margin-top:12px;font-weight:bold;min-height:22px"></div>`;
+  const controls=el('div','controls');const seg=el('div','seg');seg.innerHTML=`<button data-m="no" class="on">بلا نسخة احتياطية</button><button data-m="yes">لديك نسخة (3-2-1)</button>`;
+  controls.appendChild(seg);controls.insertAdjacentHTML('beforeend',`<button class="btn red" id="hitBtn">هجوم فدية ▶</button>`);
+  b.appendChild(stage);b.appendChild(controls);let mode='no';
+  seg.querySelectorAll('button').forEach(x=>x.onclick=()=>{mode=x.dataset.m;[...seg.children].forEach(y=>y.classList.toggle('on',y===x));
+    for(let i=0;i<10;i++)$('#bf'+i).classList.remove('enc');$('#bkStatus').textContent='';stage.style.boxShadow='';$('#hitBtn').disabled=false;const ex=$('.explain',b);if(ex)ex.remove();});
+  $('#hitBtn').onclick=()=>{$('#hitBtn').disabled=true;$('#bkStatus').textContent='';const exx=$('.explain',b);if(exx)exx.remove();
+    for(let i=0;i<10;i++)addT(setTimeout(function(){$('#bf'+i).classList.add('enc');},i*110));
+    addT(setTimeout(function(){
+      if(mode==='no'){$('#bkStatus').innerHTML='<span style="color:var(--red)">✘ كل الملفات مشفّرة — لا سبيل للاسترجاع</span>';stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.2)';
+        explain(b,'bad','بلا نسخة = رهينة كاملة',`شُفّرت ملفاتك ولا نسخة سليمة لديك، فأنت أمام خيارين مُرّين: دفع فدية (بلا ضمان) أو خسارة كل شيء.<br><br>`+rows([['r','الدفع يموّل المجرمين وقد لا يُعيد الملفات'],['g','القاعدة 3-2-1: 3 نسخ، على وسيطين مختلفين، وواحدة خارج الموقع']]));}
+      else{$('#bkStatus').innerHTML='<span style="color:var(--amber)">جارٍ مسح الأجهزة والاسترجاع من النسخة…</span>';
+        addT(setTimeout(function(){for(let i=0;i<10;i++)addT(setTimeout(function(){$('#bf'+i).classList.remove('enc');},i*90));
+          addT(setTimeout(function(){$('#bkStatus').innerHTML='<span style="color:var(--green)">✓ استُرجعت كل الملفات — لا فدية</span>';stage.style.boxShadow='';$('#hitBtn').disabled=false;
+            explain(b,'good','النسخة الاحتياطية أبطلت الابتزاز',`لأن لديك نسخة سليمة ومعزولة، مسحتَ الأجهزة المصابة واسترجعت عملك دون دفع أي فدية — فقد المهاجم ورقة الضغط.<br><br>`+rows([['g','النسخة المعزولة (Offline) تنجو من التشفير'],['g','اختبر الاسترجاع دوريًّا لتتأكّد أنه يعمل فعلًا']]));},1100));},700));}},1300));};
+  markUnlock();
+ }},
+
+/* ---- 24. Encryption ---- */
+{id:'crypto',title:'التشفير يحمي رسالتك',sub:'Encryption — ماذا يرى المتنصّت: نصًّا واضحًا أم طلاسم؟',color:'#9b6dff',icon:()=>IC.key('#9b6dff'),
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');b.appendChild(stage);
+  const D=Diagram(stage,'260px');curDiagram=D;
+  D.addNode('you',14,50,IC.user('#33d17a'),'أنت');
+  D.addNode('spy',50,50,IC.attacker('#ff5566'),'متنصّت على الشبكة');
+  D.addNode('bank',86,50,IC.server('#4a9eff'),'الخادم');
+  D.link('you','spy','#243450',2,'6 4');D.link('spy','bank','#243450',2,'6 4');
+  const controls=el('div','controls');const seg=el('div','seg');seg.innerHTML=`<button data-m="plain" class="on">HTTP — بلا تشفير</button><button data-m="enc">HTTPS — مشفّر</button>`;
+  controls.appendChild(seg);controls.insertAdjacentHTML('beforeend',`<button class="btn" id="sendBtn">أرسِل «كلمة المرور: BANK@2026» ▶</button>`);
+  const ro=el('div','readout');ro.innerHTML=`<div class="ro" style="grid-column:1/-1"><div class="l">ما يلتقطه المتنصّت</div><div class="v mono" id="spySees" style="direction:ltr;text-align:left;color:var(--mut);word-break:break-all">—</div></div>`;
+  b.appendChild(controls);b.appendChild(ro);let mode='plain';
+  seg.querySelectorAll('button').forEach(x=>x.onclick=()=>{mode=x.dataset.m;[...seg.children].forEach(y=>y.classList.toggle('on',y===x));$('#spySees').textContent='—';$('#spySees').style.color='var(--mut)';stage.style.boxShadow='';const ex=$('.explain',b);if(ex)ex.remove();});
+  const msg='pass: BANK@2026';const scr='8f2a:e91c7b04:aa3d:19f6:c2e5:7b';
+  $('#sendBtn').onclick=()=>{$('#sendBtn').disabled=true;const ex=$('.explain',b);if(ex)ex.remove();
+    D.packet('you','spy',{color:mode==='enc'?'#9b6dff':'#ffb02e',dur:800,onDone:function(){
+      if(mode==='plain'){$('#spySees').textContent=msg;$('#spySees').style.color='#ff9aa6';stage.style.boxShadow='inset 0 0 50px rgba(255,85,102,.18)';}
+      else{$('#spySees').textContent=scr;$('#spySees').style.color='#b79cff';}
+      D.packet('spy','bank',{color:mode==='enc'?'#9b6dff':'#ffb02e',dur:800,onDone:function(){$('#sendBtn').disabled=false;
+        if(mode==='plain')explain(b,'bad','النص الواضح مكشوف تمامًا',`أُرسلت بياناتك دون تشفير (HTTP)، فقرأها المتنصّت على الشبكة حرفًا بحرف — بما فيها كلمة المرور.<br><br>`+rows([['r','أي جهاز على المسار يقرأ ويعدّل النص الواضح'],['g','الدفاع: لا تُدخِل بيانات إلا على HTTPS (القفل)، وتجنّب الشبكات المفتوحة']]));
+        else explain(b,'good','التشفير حوّلها إلى طلاسم',`مع HTTPS شُفّرت رسالتك قبل مغادرة جهازك، فما رآه المتنصّت مجرّد رموز بلا معنى، ولا يفكّها إلا الخادم المقصود بمفتاحه.<br><br>`+rows([['g','التشفير يحمي البيانات أثناء نقلها (Confidentiality)'],['g','تأكّد من القفل 🔒 و https:// قبل إدخال أي بيانات حسّاسة']]));}});}});};
+  markUnlock();
+ }},
+
+/* ---- 25. Typosquatting / lookalike domains ---- */
+{id:'typosquat',title:'النطاقات المتشابهة',sub:'Typosquatting — رابط مزيّف يكاد يطابق الأصلي',color:'#4a9eff',icon:IC.link,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  const urls=[{u:'https://www.paypal.com',ok:true,note:'النطاق الرسمي الصحيح'},
+    {u:'https://www.paypa1.com',ok:false,note:'الحرف l استُبدل بالرقم 1'},
+    {u:'https://paypal.secure-login.com',ok:false,note:'الكلمة قبل .com هي secure-login وليست paypal'},
+    {u:'https://www.paypaI.com',ok:false,note:'حرف I كبير بدل l صغير — يكاد لا يُلاحظ'}];
+  stage.innerHTML=`<div style="text-align:center;color:var(--mut);font-size:12.5px;margin-bottom:12px">🔎 وصلتك رسالة عن حسابك — أيّ رابط هو موقع «PayPal» الحقيقي؟</div><div id="urlList" style="max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:10px"></div>`;
+  b.appendChild(stage);const list=$('#urlList');
+  urls.forEach((x,i)=>{const c=el('div','opt');c.style.cssText+=';direction:ltr;justify-content:space-between;font-family:Consolas,monospace';
+    c.innerHTML=`<span>🔒 ${x.u}</span>`;c.dataset.i=i;list.appendChild(c);});
+  list.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{const x=urls[o.dataset.i];list.querySelectorAll('.opt').forEach(y=>y.style.pointerEvents='none');
+    if(x.ok){o.classList.add('correct');
+      urls.forEach((u,i)=>{if(!u.ok){const c2=list.children[i];c2.classList.add('wrong');c2.insertAdjacentHTML('beforeend',`<span style="font-family:Tahoma;font-size:11px;color:#ff9aa6;direction:rtl">${u.note}</span>`);}});
+      explain(b,'good','أحسنت — هذا النطاق الرسمي',`الموقع الحقيقي هو الاسم الذي يسبق «.com» مباشرةً (أول «/» بعده). دقّق في كل حرف قبل تسجيل الدخول.<br><br>`+rows([['g','افحص التهجئة حرفًا حرفًا: 1 مقابل l، I مقابل l، 0 مقابل o'],['g','ادخل المواقع المهمّة من مفضّلتك لا من روابط الرسائل']]));}
+    else{o.classList.add('wrong');o.insertAdjacentHTML('beforeend',`<span style="font-family:Tahoma;font-size:11px;color:#ff9aa6;direction:rtl">${x.note}</span>`);stage.style.boxShadow='inset 0 0 50px rgba(255,85,102,.18)';
+      explain(b,'bad','رابط مزيّف — هذا Typosquatting',`يسجّل المهاجم نطاقًا يشبه الأصلي بحرف مبدَّل أو ترتيب مخادع، ويصنع نسخة مطابقة من الصفحة ليسرق بياناتك عند تسجيل الدخول.<br><br>`+rows([['r',x.note],['g','الدفاع: افحص الاسم قبل «.com»، وادخل المواقع الحسّاسة من المفضّلة']]));}});
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn ghost sm" id="rsBtn">↺ إعادة</button><span style="color:var(--mut);font-size:12px">تلميح: انظر جيّدًا إلى ما قبل «.com» مباشرةً</span>`;b.appendChild(controls);
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='typosquat').build();markUnlock();
+ }},
+
+/* ---- 26. Credential Stuffing / password reuse ---- */
+{id:'credstuff',title:'إعادة استخدام كلمة المرور',sub:'Credential Stuffing — تسريب موقع واحد يُسقط بقية حساباتك',color:'#ff5566',icon:IC.key,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');b.appendChild(stage);
+  const D=Diagram(stage,'320px');curDiagram=D;
+  D.addNode('att',12,50,IC.attacker('#ff5566'),'المهاجم');
+  D.addNode('game',40,84,IC.pc('#ffb02e'),'موقع ألعاب (تسرّب)');
+  D.addNode('mail',58,14,IC.mail('#4a9eff'),'بريدك');
+  D.addNode('bank',84,34,IC.server('#33d17a'),'بنكك');
+  D.addNode('shop',86,66,IC.globe('#9b6dff'),'متجرك');
+  D.addNode('soc',58,88,IC.user('#12b3a5'),'حسابك الاجتماعي');
+  ['mail','bank','shop','soc','game'].forEach(id=>D.link('att',id,'#243450',1.4,'5 5'));
+  const controls=el('div','controls');const seg=el('div','seg');seg.innerHTML=`<button data-m="reuse" class="on">كلمة مرور واحدة للجميع</button><button data-m="unique">كلمة مرور فريدة لكل موقع</button>`;
+  controls.appendChild(seg);controls.insertAdjacentHTML('beforeend',`<button class="btn red" id="leakBtn">تسرّب موقع الألعاب ▶</button>`);
+  b.appendChild(controls);let mode='reuse';
+  const names={game:'موقع ألعاب (تسرّب)',mail:'بريدك',bank:'بنكك',shop:'متجرك',soc:'حسابك الاجتماعي'};
+  function setL(id,txt,col){const n=D.nodes[id];if(n){const l=n.dom.querySelector('.lbl');if(l){l.innerHTML=txt;l.style.color=col;}}}
+  function reset(){Object.keys(names).forEach(id=>setL(id,names[id],''));stage.style.boxShadow='';$('#leakBtn').disabled=false;const ex=$('.explain',b);if(ex)ex.remove();}
+  seg.querySelectorAll('button').forEach(x=>x.onclick=()=>{mode=x.dataset.m;[...seg.children].forEach(y=>y.classList.toggle('on',y===x));reset();});
+  $('#leakBtn').onclick=()=>{$('#leakBtn').disabled=true;const ex=$('.explain',b);if(ex)ex.remove();
+    D.packet('game','att',{color:'#ff5566',dur:700,onDone:function(){setL('game','تسرّبت كلمتك ✘','var(--red)');
+      const accts=['mail','bank','shop','soc'];
+      accts.forEach((id,i)=>addT(setTimeout(function(){
+        D.packet('att',id,{color:mode==='reuse'?'#ff5566':'#ffb02e',dur:600,onDone:function(){
+          if(mode==='reuse')setL(id,names[id]+' ✘','var(--red)');else setL(id,names[id]+' ✓ آمن','var(--green)');}});},200+i*380)));
+      addT(setTimeout(function(){
+        if(mode==='reuse'){stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.2)';
+          explain(b,'bad','تسريب واحد = سقوط كل حساباتك',`لأنك تستخدم كلمة المرور نفسها في كل مكان، أخذها المهاجم من الموقع المخترَق وجرّبها آليًّا على بقية مواقعك (Credential Stuffing) فدخلها جميعًا.<br><br>`+rows([['r','موقع ضعيف واحد يعرّض كل حساباتك'],['g','الدفاع: كلمة مرور فريدة لكل حساب + مدير كلمات مرور + MFA']]));}
+        else explain(b,'good','التفرّد عزل الضرر',`لأن لكل موقع كلمة مرور مختلفة، لم تنفع الكلمة المسرّبة في أي حساب آخر، فبقي الضرر محصورًا في موقع الألعاب وحده.<br><br>`+rows([['g','التفرّد يمنع تأثير الدومينو بين الحسابات'],['g','مدير كلمات المرور يولّد ويحفظ كلمة قويّة فريدة لكل موقع']]));},200+accts.length*380+500));}});};
+  markUnlock();
+ }},
+
+/* ---- 27. Scareware / fake antivirus ---- */
+{id:'scareware',title:'البرمجيات المخيفة',sub:'Scareware — نافذة تدّعي أن جهازك مصاب لتخدعك',color:'#ffb02e',icon:()=>IC.warn('#ffb02e'),
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:440px;margin:0 auto"><div style="color:var(--mut);font-size:12px;margin-bottom:8px">🌐 بينما تتصفّح موقعًا… تقفز هذه النافذة فجأة:</div>
+   <div id="swPop" class="pulse" style="background:#1a0f0f;border:2px solid var(--red);border-radius:12px;padding:16px;text-align:center">
+     <div style="width:44px;margin:0 auto 8px">${IC.warn('#ff5566')}</div>
+     <div style="font-weight:bold;color:#ff8a97;font-size:16px">⚠ تحذير: جهازك مصاب!</div>
+     <div style="font-size:13px;color:#ffd9de;margin:6px 0">كشف الفحص <b>5</b> فيروسات خطيرة. قد تُسرق بياناتك خلال دقائق!</div>
+     <div class="meter" style="margin:10px 0"><i style="width:100%;background:linear-gradient(90deg,#ff3b52,#ffb02e)"></i></div>
+     <div style="display:flex;gap:8px;justify-content:center;margin-top:6px"><button class="btn red sm" id="cleanBtn">نظّف الآن!</button><button class="btn ghost sm" id="closeBtn">✕ أغلق وتجاهل</button></div>
+     <div style="font-size:10px;color:var(--mut);margin-top:8px">SecureScan Pro™ · إعلان</div></div></div>`;
+  b.appendChild(stage);
+  $('#cleanBtn').onclick=()=>{$('#cleanBtn').disabled=true;$('#closeBtn').disabled=true;stage.style.boxShadow='inset 0 0 60px rgba(255,85,102,.22)';
+    explain(b,'bad','هذا هو الفخّ نفسه — Scareware',`لا يوجد فيروس أصلًا؛ الرسالة صُمّمت لإخافتك. زرّ «نظّف الآن» هو ما يُنزّل البرمجية الخبيثة الحقيقية (أو يطلب دفعًا مقابل «حماية» وهمية).<br><br>`+rows([['r','التخويف والاستعجال أدوات ضغط نفسي'],['g','الدفاع: لا تنقر داخل النوافذ المنبثقة؛ أغلق التبويب، وافحص بمضادّ فيروسات موثوق تملكه أنت']]));};
+  $('#closeBtn').onclick=()=>{$('#cleanBtn').disabled=true;$('#closeBtn').disabled=true;const p=$('#swPop');p.style.opacity='.3';p.classList.remove('pulse');
+    explain(b,'good','تصرّف سليم — تجاهلت التخويف',`أدركت أن موقع ويب لا يستطيع فحص جهازك، فأغلقت النافذة دون النقر داخلها. لا ضرر.<br><br>`+rows([['g','المواقع لا تفحص جهازك — أي «فحص» داخل المتصفّح خدعة'],['g','استخدم مضادّ فيروسات مُثبَّتًا وموثوقًا فقط']]));};
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;b.appendChild(controls);
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='scareware').build();markUnlock();
+ }},
+
+/* ---- 28. Cryptojacking ---- */
+{id:'cryptojack',title:'تعدين خفيّ للعملات',sub:'Cryptojacking — سكربت يسرق قدرة معالجك سرًّا',color:'#ffb02e',icon:IC.cpu,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:470px;margin:0 auto"><div style="color:var(--mut);font-size:12px;margin-bottom:10px">💻 راقب حالة جهازك أثناء فتح موقع مشبوه</div>
+   <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px"><div style="width:52px;flex:0 0 auto">${IC.cpu('#ffb02e')}</div>
+     <div style="flex:1"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span>استهلاك المعالج (CPU)</span><span id="cpuV" class="mono">6%</span></div><div class="meter"><i id="cpuBar" style="width:6%;background:linear-gradient(90deg,#33d17a,#ffb02e)"></i></div></div></div>
+   <div class="readout"><div class="ro"><div class="l">حرارة المعالج</div><div class="v" id="tempV">42°</div></div><div class="ro"><div class="l">البطارية</div><div class="v" id="battV">100%</div></div><div class="ro"><div class="l">عملات عُدِّنت للمهاجم</div><div class="v mono" id="coinV" style="color:var(--amber)">0</div></div></div></div>`;
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn red" id="openBtn">افتح الموقع المشبوه ▶</button><button class="btn" id="killBtn" style="display:none">أنهِ العملية الخبيثة 🛡</button>`;
+  b.appendChild(stage);b.appendChild(controls);let iv=null;
+  $('#openBtn').onclick=()=>{$('#openBtn').disabled=true;$('#killBtn').style.display='';let cpu=6,temp=42,batt=100,coin=0;
+    iv=setInterval(function(){cpu=Math.min(99,cpu+7);temp=Math.min(88,temp+3);batt=Math.max(0,batt-1);coin+=2;
+      $('#cpuBar').style.width=cpu+'%';$('#cpuV').textContent=Math.round(cpu)+'%';$('#tempV').textContent=Math.round(temp)+'°';$('#tempV').style.color=temp>70?'var(--red)':'';$('#battV').textContent=batt+'%';$('#coinV').textContent=coin;
+      if(cpu>=99){stage.style.boxShadow='inset 0 0 60px rgba(255,176,46,.2)';if(!$('.explain',b))explain(b,'bad','معالجك يعمل لصالح المهاجم',`سكربت تعدين خفيّ يستغلّ معالجك لتوليد عملات رقمية للمهاجم. النتيجة: بطء شديد، سخونة، واستنزاف للبطارية — دون أن ترى أي نافذة.<br><br>`+rows([['r','قد يأتي من موقع مصاب أو إعلان أو إضافة متصفّح خبيثة'],['g','الدفاع: أغلق التبويب، حدّث المتصفّح، واستخدم حاجب سكربتات ومضادّ برمجيات']]));}},130);addT(iv);};
+  $('#killBtn').onclick=function(){if(iv)clearInterval(iv);let cpu=parseInt($('#cpuV').textContent)||99;const d=setInterval(function(){cpu=Math.max(6,cpu-9);$('#cpuBar').style.width=cpu+'%';$('#cpuV').textContent=cpu+'%';if(cpu<=6){clearInterval(d);$('#tempV').textContent='43°';$('#tempV').style.color='';stage.style.boxShadow='';}},80);addT(d);
+    this.style.display='none';$('#openBtn').disabled=false;const ex=$('.explain',b);if(ex)ex.remove();
+    explain(b,'good','أنهيت التعدين — عاد الجهاز لطبيعته',`بإغلاق العملية/التبويب عاد المعالج لوضعه الطبيعي. اعتبر ارتفاع استهلاك المعالج المفاجئ إشارة تحذير.<br><br>`+rows([['g','ارتفاع CPU بلا سبب واضح = علامة إنذار'],['g','حاجب السكربتات يمنع معظم مواقع التعدين']]));};
+  markUnlock();
+ }},
+
+/* ---- 29. Tailgating / physical security ---- */
+{id:'tailgate',title:'التسلّل خلف الموظّف',sub:'Tailgating — دخول مكان مؤمّن دون بطاقة',color:'#4a9eff',icon:IC.door,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  stage.innerHTML=`<div style="max-width:480px;margin:0 auto"><div style="color:var(--mut);font-size:12px;margin-bottom:10px">🏢 بابٌ مؤمّن ببطاقة. دخلتَ للتوّ، ويقترب شخص لا تعرفه:</div>
+   <div style="display:flex;align-items:flex-end;justify-content:center;gap:10px;background:#0e1728;border:1px solid var(--line);border-radius:12px;padding:16px">
+     <div style="text-align:center"><div style="width:40px;margin:0 auto">${IC.user('#33d17a')}</div><div style="font-size:11px;color:var(--mut);margin-top:4px">أنت (لديك بطاقة)</div></div>
+     <div style="text-align:center"><div style="width:44px;margin:0 auto">${IC.door('#4a9eff')}</div><div id="dstate" style="font-size:11px;color:var(--green);margin-top:4px">🔓 مفتوح</div></div>
+     <div style="text-align:center"><div style="width:40px;margin:0 auto">${IC.attacker('#ff5566')}</div><div style="font-size:11px;color:var(--mut);margin-top:4px">غريب بلا بطاقة</div></div></div>
+   <div style="background:#132038;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;margin-top:10px">🗣️ «يداي مشغولتان بالقهوة… تمسك لي الباب من فضلك؟»</div>
+   <div class="opt" data-c="hold" style="margin-top:10px">🚪 أمسك له الباب — لأبدو لطيفًا</div>
+   <div class="opt" data-c="deny" style="border-color:var(--teal)">🛡 أعتذر وأطلب منه تمرير بطاقته أو مراجعة الاستقبال</div></div>`;
+  b.appendChild(stage);
+  stage.querySelectorAll('.opt').forEach(o=>o.onclick=()=>{stage.querySelectorAll('.opt').forEach(x=>x.style.pointerEvents='none');
+    if(o.dataset.c==='hold'){o.classList.add('wrong');$('#dstate').innerHTML='⛔ دخل!';$('#dstate').style.color='var(--red)';stage.style.boxShadow='inset 0 0 50px rgba(255,85,102,.18)';
+      explain(b,'bad','دخل دون تصريح — هذا Tailgating',`أقوى الأبواب لا تنفع إن فتحتها أنت. استغلّ المتسلّل اللباقة الاجتماعية ليتجاوز نظام البطاقات ويصل إلى منطقة محظورة قد تحوي أجهزة وبيانات حسّاسة.<br><br>`+rows([['r','الأمن المادّي جزء أصيل من الأمن السيبراني'],['g','الدفاع: كل شخص يمرّر بطاقته، لا تُمسك الباب للغرباء، ووجّههم للاستقبال']]));}
+    else{o.classList.add('correct');explain(b,'good','تصرّف سليم — حميت المكان',`طلبت منه التحقّق عبر القناة الرسمية بأدب. الأمن المادّي مسؤولية الجميع، ورفض المجاملة هنا حماية لا وقاحة.<br><br>`+rows([['g','تحقّق من الهوية قبل السماح بالدخول'],['g','أبلغ الأمن عن أي محاولة تسلّل']]));}});
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn ghost sm" id="rsBtn">↺ إعادة</button>`;b.appendChild(controls);
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='tailgate').build();markUnlock();
+ }},
+
+/* ---- 30. Digital footprint / oversharing ---- */
+{id:'footprint',title:'بصمتك الرقمية',sub:'Digital Footprint — كم يكشف عنك ما تنشره؟',color:'#12b3a5',icon:IC.print,
+ build(){const b=$('#labBody');const stage=el('div','stage stagegrid');
+  const items=[{k:'bday',t:'تاريخ ميلادي كاملًا 🎂',risk:'يُستخدم لتخمين أسئلة الأمان وانتحال الهوية'},
+    {k:'loc',t:'موقع منزلي ومدينتي 📍',risk:'يكشف مكان سكنك لملاحقة أو سرقة'},
+    {k:'pet',t:'اسم قطّتي المدلّل 🐱',risk:'كثيرًا ما يكون هو جواب «سؤال الأمان» السرّي'},
+    {k:'trip',t:'إجازتي: مسافر أسبوعًا كاملًا! ✈️',risk:'يخبر اللصوص أن منزلك فارغ الآن'},
+    {k:'work',t:'مكان عملي ومنصبي 💼',risk:'يساعد على تصيّد موجَّه ينتحل زملاءك ومديرك'}];
+  stage.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:640px;margin:0 auto">
+    <div><div style="color:var(--teal);font-size:12px;margin-bottom:8px">📝 منشورك — اختر ما تشاركه علنًا</div><div id="postList" style="display:flex;flex-direction:column;gap:8px"></div></div>
+    <div><div style="color:var(--red);font-size:12px;margin-bottom:8px">🕵️ ملفّ يبنيه المهاجم عنك</div>
+      <div id="dossier" style="background:#180d14;border:1px solid var(--red);border-radius:12px;padding:12px;min-height:150px;font-size:12.5px;line-height:1.9;color:#ffb3bd"></div>
+      <div id="dScore" style="text-align:center;margin-top:8px;font-weight:bold"></div></div></div>`;
+  b.appendChild(stage);const post=$('#postList');const shared=new Set();
+  items.forEach(x=>{const c=el('div','opt');c.dataset.k=x.k;c.innerHTML=`<span>${x.t}</span>`;post.appendChild(c);
+    c.onclick=()=>{if(shared.has(x.k)){shared.delete(x.k);c.classList.remove('wrong');}else{shared.add(x.k);c.classList.add('wrong');}render();};});
+  function render(){const d=$('#dossier');
+    if(!shared.size){d.innerHTML=`<span style="color:var(--mut)">لم تشارك شيئًا بعد — لا معلومات للمهاجم.</span>`;$('#dScore').textContent='';stage.style.boxShadow='';const ex0=$('.explain',b);if(ex0)ex0.remove();return;}
+    d.innerHTML=items.filter(x=>shared.has(x.k)).map(x=>`<div class="row"><span class="dot r"></span><div><b style="color:#ff9aa6">${x.t}</b> — ${x.risk}</div></div>`).join('');
+    const n=shared.size;$('#dScore').innerHTML=`خطر التعرّض: <span style="color:${n>=4?'var(--red)':n>=2?'var(--amber)':'var(--green)'}">${'●'.repeat(n)}${'○'.repeat(5-n)}</span>`;
+    if(n>=4&&!$('.explain',b)){stage.style.boxShadow='inset 0 0 50px rgba(255,85,102,.16)';
+      explain(b,'bad','بصمتك الرقمية تكشف الكثير',`كل معلومة تبدو بريئة وحدها، لكنها تتجمّع في ملفّ متكامل يستخدمه المهاجم للتصيّد الموجّه أو انتحال الهوية أو حتى السرقة المادّية.<br><br>`+rows([['r','المعلومات الصغيرة تتجمّع لتصنع خطرًا كبيرًا'],['g','الدفاع: قلّل المشاركة، اضبط إعدادات الخصوصية، لا تعلن سفرك مباشرةً، ولا تجعل إجاباتك السرّية عامّة']]));}}
+  render();
+  const controls=el('div','controls');controls.innerHTML=`<button class="btn ghost sm" id="rsBtn">↺ إعادة</button><span style="color:var(--mut);font-size:12px">فعّل العناصر وشاهد ملفّ المهاجم يكتمل</span>`;b.appendChild(controls);
+  $('#rsBtn').onclick=()=>LABS.find(l=>l.id==='footprint').build();markUnlock();
+ }},
+];
+
+/* ---------- router / hub ---------- */
+const done=new Set();let curIdx=-1;
+function markUnlock(){if(curIdx>=0)done.add(LABS[curIdx].id);const nb=$('#nextLabBtn');if(curIdx<LABS.length-1){nb.style.display='';}else{nb.style.display='none';}}
+function buildHub(){const g=$('#labGrid');g.innerHTML='';LABS.forEach((L,i)=>{
+  const c=el('div','labcard'+(done.has(L.id)?' done':''));
+  c.innerHTML=`<div class="no mono">0${i+1}</div><div class="chk">✔ اكتمل</div>
+    <div class="ic" style="${chip(L.color)}">${L.icon(L.color)}</div>
+    <h3>${L.title}</h3><p>${L.sub}</p><div class="go">▶ ابدأ المحاكاة</div>`;
+  c.onclick=()=>openLab(i);g.appendChild(c);});}
+function openLab(i){curIdx=i;const L=LABS[i];clearLab();
+  $('#labIc').style.cssText='width:46px;height:46px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;'+chip(L.color);
+  $('#labIc').innerHTML=L.icon(L.color);$('#labTitle').textContent=L.title;$('#labSub').textContent=L.sub;
+  show('lab');L.build();}
+$('#backBtn').onclick=()=>{clearLab();buildHub();show('hub');};
+$('#nextLabBtn').onclick=()=>{if(curIdx<LABS.length-1)openLab(curIdx+1);};
+buildHub();
+</script>
+</body>
+</html>
